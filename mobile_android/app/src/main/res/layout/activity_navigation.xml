@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#020617"
+    android:padding="16dp">
+
+    <!-- Active Emergency Evacuation Banner -->
+    <TextView
+        android:id="@+id/statusBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#EF4444"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:gravity="center"
+        android:padding="12dp"
+        android:text="🚨 EVACUATION ROUTING ACTIVE"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Offline Network Suspend Banner (hidden by default) -->
+    <TextView
+        android:id="@+id/offlineWarningBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#F59E0B"
+        android:textColor="#020617"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="⚠️ OFFLINE MODE: Network dropped. Showing cached route."
+        android:visibility="gone"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Visual Path Summary Card -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#0F172A"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:id="@+id/routeTitleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:text="Origin: ROOM-4-OR ➜ Exit: EXIT-CIT-FIELD" />
+
+        <TextView
+            android:id="@+id/routeMetricsText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#94A3B8"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp"
+            android:text="Est. Distance: 41.0 meters | Floor: 4" />
+
+    </LinearLayout>
+
+    <!-- Turn-by-turn Step-by-Step Directions Container -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="EVACUATION DIRECTIONS GUIDE"
+        android:textColor="#94A3B8"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#1E293B"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:id="@+id/directionsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Dynamic step TextViews will be added here -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:padding="8dp"
+                android:text="Retrieving shortest evacuation routing..." />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Emergency Distress Button -->
+    <Button
+        android:id="@+id/distressButton"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:text="🚨 TRIGGER DISTRESS ALERT"
+        android:backgroundTint="#B91C1C"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Back Button -->
+    <Button
+        android:id="@+id/backButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Return to Portal"
+        android:backgroundTint="#334155"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="8dp" />
+
+</LinearLayout>

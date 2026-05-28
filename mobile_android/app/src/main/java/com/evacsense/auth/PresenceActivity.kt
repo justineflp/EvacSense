@@ -40,11 +40,21 @@ class PresenceActivity : AppCompatActivity() {
 
     private lateinit var authService: AuthService
 
-    private val roomIds = arrayOf("ROOM-401", "ROOM-402", "ROOM-403")
+    private val roomIds = arrayOf(
+        "ROOM-101",
+        "ROOM-102",
+        "ROOM-207",
+        "ROOM-301",
+        "ROOM-4-OR",
+        "ROOM-4-WARD"
+    )
     private val roomNames = arrayOf(
-        "Room 401 (CS Lab 1)",
-        "Room 402 (CS Lab 2)",
-        "Room 403 (CCS Seminar Room)"
+        "Room 101 (Comp Lab 101)",
+        "Room 102 (Comp Lab 102)",
+        "Room 207 (eLearning Center)",
+        "Room 301 (Lecture Room 301)",
+        "Room 4-OR (Operating Room)",
+        "Room 4-WARD (Nursing Ward)"
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,7 +79,7 @@ class PresenceActivity : AppCompatActivity() {
 
         // Setup Retrofit Client
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:5000/")
+            .baseUrl(AuthService.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         authService = retrofit.create(AuthService::class.java)

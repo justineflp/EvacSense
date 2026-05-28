@@ -401,11 +401,40 @@ function registerRealtimeStream(req, res) {
   });
 }
 
+function triggerSSEBroadcast(payload) {
+  try {
+    sseClients.forEach(client => {
+      client.res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    });
+  } catch (err) {
+    console.error('[SSE BROADCAST ERROR] Failed to push trigger:', err);
+  }
+}
+
+// 7. Get currently active drill run session (public query endpoint for mobile apps)
+async function getActiveDrill(req, res) {
+  try {
+    const drill = await DrillSession.findOne({ where: { status: 'active' } });
+    return res.status(200).json({
+      status: 'success',
+      activeDrill: drill ? { id: drill.id, name: drill.name, activatedAt: drill.activatedAt } : null
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to retrieve active drill.',
+      errors: [error.message]
+    });
+  }
+}
+
 module.exports = {
   startDrill,
   concludeDrill,
   scanPresence,
   manualOverride,
   getOccupancyDashboard,
-  registerRealtimeStream
+  registerRealtimeStream,
+  triggerSSEBroadcast,
+  getActiveDrill
 };

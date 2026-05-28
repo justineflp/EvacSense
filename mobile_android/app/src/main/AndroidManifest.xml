@@ -44,5 +44,10 @@
             android:name=".PresenceActivity"
             android:exported="false" />
 
+        <!-- Evacuation Guidance & Rerouting Activity (Module 3) -->
+        <activity
+            android:name=".NavigationActivity"
+            android:exported="false" />
+
     </application>
 </manifest>

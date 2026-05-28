@@ -7,9 +7,11 @@ const Room = require('./models/roomModel');
 const AccessPoint = require('./models/accessPointModel');
 const DrillSession = require('./models/drillSessionModel');
 const ClassroomOccupancy = require('./models/occupancyModel');
+const Edge = require('./models/edgeModel');
 
 const authController = require('./controllers/authController');
 const drillController = require('./controllers/drillController');
+const navigationController = require('./controllers/navigationController');
 const authorize = require('./middlewares/rbacMiddleware');
 
 const app = express();
@@ -40,12 +42,21 @@ app.put('/api/admin/requests/:id/approve', authorize(['System Admin']), authCont
 app.put('/api/admin/requests/:id/reject', authorize(['System Admin']), authController.rejectRequest);
 
 // Protected Module 2: Classroom Presence Recording & Drills
+app.get('/api/drill/active', drillController.getActiveDrill);
 app.post('/api/drill/start', authorize(['System Admin', 'Drill Coordinator']), drillController.startDrill);
 app.post('/api/drill/conclude', authorize(['System Admin', 'Drill Coordinator']), drillController.concludeDrill);
 app.get('/api/presence/occupancy', authorize(['System Admin', 'Drill Coordinator']), drillController.getOccupancyDashboard);
 app.get('/api/presence/realtime', drillController.registerRealtimeStream);
 app.post('/api/presence/scan', authorize(['Student', 'Teacher']), drillController.scanPresence);
 app.post('/api/presence/manual', authorize(['Student', 'Teacher']), drillController.manualOverride);
+
+// Protected Module 3: Shortest-Path Evacuation Navigation
+app.get('/api/nav/nodes', authorize(), navigationController.getNodes);
+app.post('/api/nav/nodes', authorize(['System Admin', 'Drill Coordinator']), navigationController.createNode);
+app.get('/api/nav/edges', authorize(), navigationController.getEdges);
+app.post('/api/nav/edges', authorize(['System Admin', 'Drill Coordinator']), navigationController.createEdge);
+app.post('/api/nav/block', authorize(['System Admin', 'Drill Coordinator']), navigationController.toggleBlockage);
+app.get('/api/nav/route', authorize(), navigationController.getEvacuationRoute);
 
 // Error Fallback Handler
 app.use((err, req, res, next) => {
@@ -61,7 +72,7 @@ app.use((err, req, res, next) => {
 async function initDatabase() {
   try {
     await sequelize.authenticate();
-    console.log('[DATABASE] SQLite connection established successfully.');
+    console.log(`[DATABASE] ${sequelize.getDialect().toUpperCase()} connection established successfully.`);
     
     // Sync tables to keep schemas clean
     await sequelize.sync();
@@ -126,64 +137,24 @@ async function initDatabase() {
     await User.bulkCreate(mockUsers, { ignoreDuplicates: true });
     console.log(`[DATABASE] Seeded ${mockUsers.length} active CIT-U users.`);
 
-    // 2. Room Coordinates Seeding
-    const mockRooms = [
-      {
-        id: "ROOM-401",
-        name: "Room 401 (CS Lab 1)",
-        floor: 4,
-        building: "College of Computer Studies",
-        xMin: 0.0, xMax: 10.0,
-        yMin: 0.0, yMax: 10.0
-      },
-      {
-        id: "ROOM-402",
-        name: "Room 402 (CS Lab 2)",
-        floor: 4,
-        building: "College of Computer Studies",
-        xMin: 10.0, xMax: 20.0,
-        yMin: 0.0, yMax: 10.0
-      },
-      {
-        id: "ROOM-403",
-        name: "Room 403 (CCS Seminar)",
-        floor: 4,
-        building: "College of Computer Studies",
-        xMin: 0.0, xMax: 10.0,
-        yMin: 10.0, yMax: 20.0
-      }
-    ];
+    // 2. NGE Building (Dr. Nicolas G. Escario Sr. Building) — Real Floor Plan Data
+    const { ngeRooms, ngeEdges, ngeAccessPoints } = require('./seed/ngeBuilding');
 
-    await Room.bulkCreate(mockRooms, { ignoreDuplicates: true });
-    console.log(`[DATABASE] Seeded ${mockRooms.length} school floor zones.`);
+    // Clear previous data for clean NGE building reseed
+    await ClassroomOccupancy.destroy({ where: {} });
+    await Edge.destroy({ where: {} });
+    await AccessPoint.destroy({ where: {} });
+    await Room.destroy({ where: {} });
 
-    // 3. Wi-Fi Access Points Seeding
-    const mockAPs = [
-      {
-        id: "AP-01",
-        macAddress: "00:0a:95:9d:68:16",
-        ssid: "CITU_AP4_East",
-        floor: 4,
-        x: 5.0, y: 5.0
-      },
-      {
-        id: "AP-02",
-        macAddress: "00:0a:95:9d:68:17",
-        ssid: "CITU_AP4_West",
-        floor: 4,
-        x: 15.0, y: 5.0
-      },
-      {
-        id: "AP-03",
-        macAddress: "00:0a:95:9d:68:18",
-        ssid: "CITU_AP4_South",
-        floor: 4,
-        x: 5.0, y: 15.0
-      }
-    ];
+    await Room.bulkCreate(ngeRooms);
+    console.log(`[DATABASE] Seeded ${ngeRooms.length} NGE Building floor zones (4 floors).`);
 
-    await AccessPoint.bulkCreate(mockAPs, { ignoreDuplicates: true });
-    console.log(`[DATABASE] Seeded ${mockAPs.length} campus Wi-Fi Access Points.`);
+    await Edge.bulkCreate(ngeEdges);
+    console.log(`[DATABASE] Seeded ${ngeEdges.length} evacuation route edges.`);
+
+    // 3. Wi-Fi Access Points (across NGE Building floors)
+    await AccessPoint.bulkCreate(ngeAccessPoints);
+    console.log(`[DATABASE] Seeded ${ngeAccessPoints.length} NGE Building Wi-Fi Access Points.`);
     console.log('--- DEFAULT ACCOUNT PASSWORD: CITCCS2026! ---');
 
   } catch (error) {

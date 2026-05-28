@@ -73,7 +73,7 @@ class RegisterActivity : AppCompatActivity() {
 
         // Initialize Retrofit Client
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:5000/")
+            .baseUrl(AuthService.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         authService = retrofit.create(AuthService::class.java)
@@ -113,18 +113,44 @@ class RegisterActivity : AppCompatActivity() {
 
         if (selectedRole == "Student") {
             val studentReq = StudentRegisterRequest(name, email, studentId = uniqueId, password, deviceId)
-            
-            // To handle custom requests, we can directly dispatch or cast
-            // Let's print out what is happening or create the DTOs
-            // In a complete Android retrofit setup, we define both endpoints.
-            // Let's simulate network success callback for students:
-            Toast.makeText(this, "Student registered successfully! Auto-activated.", Toast.LENGTH_LONG).show()
-            showLoading(false)
-            finish()
+            authService.registerStudent(studentReq).enqueue(object : Callback<AuthResponse> {
+                override fun onResponse(call: Call<AuthResponse>, response: Response<AuthResponse>) {
+                    showLoading(false)
+                    val body = response.body()
+                    if (response.isSuccessful && body?.status == "success") {
+                        Toast.makeText(this@RegisterActivity, "Student registered successfully! Auto-activated.", Toast.LENGTH_LONG).show()
+                        finish()
+                    } else {
+                        val errorMsg = body?.message ?: "Student registration failed."
+                        Toast.makeText(this@RegisterActivity, errorMsg, Toast.LENGTH_LONG).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<AuthResponse>, t: Throwable) {
+                    showLoading(false)
+                    Toast.makeText(this@RegisterActivity, "Connection error: Failed to reach server.", Toast.LENGTH_LONG).show()
+                }
+            })
         } else {
-            Toast.makeText(this, "Staff registration submitted! Pending admin approval.", Toast.LENGTH_LONG).show()
-            showLoading(false)
-            finish()
+            val staffReq = StaffRegisterRequest(name, email, employeeId = uniqueId, password, deviceId, role = selectedRole)
+            authService.registerStaff(staffReq).enqueue(object : Callback<AuthResponse> {
+                override fun onResponse(call: Call<AuthResponse>, response: Response<AuthResponse>) {
+                    showLoading(false)
+                    val body = response.body()
+                    if (response.isSuccessful && (body?.status == "success" || body?.status == "pending")) {
+                        Toast.makeText(this@RegisterActivity, "Staff registration submitted! Pending admin approval.", Toast.LENGTH_LONG).show()
+                        finish()
+                    } else {
+                        val errorMsg = body?.message ?: "Staff registration failed."
+                        Toast.makeText(this@RegisterActivity, errorMsg, Toast.LENGTH_LONG).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<AuthResponse>, t: Throwable) {
+                    showLoading(false)
+                    Toast.makeText(this@RegisterActivity, "Connection error: Failed to reach server.", Toast.LENGTH_LONG).show()
+                }
+            })
         }
     }
 
@@ -135,11 +161,4 @@ class RegisterActivity : AppCompatActivity() {
     }
 }
 
-// Additional DTO helper classes for RegisterActivity compiler checking
-data class StudentRegisterRequest(
-    val name: String,
-    val email: String,
-    val studentId: String,
-    val password: String,
-    val deviceId: String
-)
+

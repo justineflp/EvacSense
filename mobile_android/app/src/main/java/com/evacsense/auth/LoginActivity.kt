@@ -42,9 +42,9 @@ class LoginActivity : AppCompatActivity() {
         loadingProgress = findViewById(R.id.loadingProgress)
 
         // Initialize Retrofit Client
-        // Note: Change base URL matching your server network configurations
+        // Note: Change BASE_URL inside AuthService to match your server network configurations
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:5000/") // standard Android Emulator loopback port
+            .baseUrl(AuthService.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
