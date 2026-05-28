@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#020617">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Classroom Localization"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Automatic pre-drill baseline mapping"
+            android:textColor="#94A3B8"
+            android:textSize="12sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Triangulation Sweep Visual Card -->
+        <LinearLayout
+            android:id="@+id/scanCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#0F172A"
+            android:padding="24dp"
+            android:gravity="center"
+            android:layout_marginBottom="24dp"
+            android:elevation="4dp">
+
+            <!-- Simulated Radar Circle sweep representation -->
+            <View
+                android:id="@+id/radarSweep"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:background="#1E293B"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/scanStatusText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Scanning local AP networks..."
+                android:textColor="#fbbf24"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/triggerScanButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Trigger Localization"
+                android:backgroundTint="#F59E0B"
+                android:textColor="#020617"
+                android:layout_marginTop="16dp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Location Result Details Card -->
+        <LinearLayout
+            android:id="@+id/resultCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#1E1E38"
+            android:padding="20dp"
+            android:layout_marginBottom="24dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/resultTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="LOCATION VERIFIED"
+                android:textColor="#10B981"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/roomNameText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Room 401 (CS Lab 1)"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/floorText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Floor: 4 | Building: College of Computer Studies"
+                android:textColor="#94A3B8"
+                android:textSize="13sp"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+        <!-- Manual Override Fallback Panel -->
+        <LinearLayout
+            android:id="@+id/manualCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#0F172A"
+            android:padding="20dp"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Triangulation Fallback Override"
+                android:textColor="#94A3B8"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:textAllCaps="true"
+                android:layout_marginBottom="8dp" />
+
+            <Spinner
+                android:id="@+id/roomSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="#020617"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/submitManualButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Log Manual Origin"
+                android:backgroundTint="#991B1B"
+                android:textColor="#FFFFFF" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/backToDashboardButton"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="Back to Dashboard"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+
+    </LinearLayout>
+</ScrollView>
