@@ -98,11 +98,30 @@ export default function Dashboard({ user, token, onLogout }) {
       syncAdminData();
     }
     if (user.role === 'System Admin' || user.role === 'Drill Coordinator' || user.role === 'Teacher') {
-      fetchDrillState();
-      
-      // Auto-poll occupancy parameters every 5s during active drills
-      const interval = setInterval(fetchDrillState, 5000);
-      return () => clearInterval(interval);
+      // Connect to native real-time physical push events stream
+      const sseSource = new EventSource('http://127.0.0.1:5000/api/presence/realtime');
+
+      sseSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          setActiveDrill(data.activeDrill);
+          setRoomsOccupancy(data.rooms || []);
+          setUnverifiedList(data.unverifiedList || []);
+          setTotalParticipants(data.totalParticipants || 0);
+          setVerifiedCount(data.verifiedCount || 0);
+          setUnverifiedCount(data.unverifiedCount || 0);
+        } catch (err) {
+          console.error('[SSE REAL-TIME ERROR] Parsing pushed frame failed:', err);
+        }
+      };
+
+      sseSource.onerror = (err) => {
+        console.warn('[SSE CONNECTION WARNING] Reconnecting real-time stream...');
+      };
+
+      return () => {
+        sseSource.close();
+      };
     }
   }, [user.role, token]);
 

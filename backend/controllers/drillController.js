@@ -5,6 +5,21 @@ const ClassroomOccupancy = require('../models/occupancyModel');
 const { triangulateRSSI, matchRoom } = require('../services/positioningService');
 const { logEvent } = require('../services/sessionLogger');
 
+// Real-time active Server-Sent Events (SSE) connections registry
+let sseClients = [];
+
+// Broadcast live occupancy data to all connected web dashboard clients instantly
+async function broadcastUpdate() {
+  try {
+    const data = await compileOccupancyData();
+    sseClients.forEach(client => {
+      client.res.write(`data: ${JSON.stringify(data)}\n\n`);
+    });
+  } catch (err) {
+    console.error('[SSE BROADCAST ERROR] Failed to push update:', err);
+  }
+}
+
 // 1. Activate Drill Session & Initialize Baseline
 async function startDrill(req, res) {
   const { name } = req.body;
@@ -46,6 +61,9 @@ async function startDrill(req, res) {
 
     await logEvent('login', req.user.email, ip, `Earthquake Drill Run initiated: ${drill.name} (Drill ID: ${drill.id})`);
 
+    // Broadcast update to all connected web dashboard clients in real-time
+    broadcastUpdate();
+
     return res.status(201).json({
       status: 'success',
       action: 'start_drill',
@@ -79,6 +97,9 @@ async function concludeDrill(req, res) {
 
     await drill.update({ status: 'concluded', endedAt: new Date() });
     await logEvent('login', req.user.email, ip, `Drill session concluded: ${drill.name} (ID: ${drill.id})`);
+
+    // Broadcast update to all connected web dashboard clients in real-time
+    broadcastUpdate();
 
     return res.status(200).json({
       status: 'success',
@@ -149,6 +170,9 @@ async function scanPresence(req, res) {
 
       await logEvent('token_validation', req.user.email, ip, `Auto presence verified at room ${matched.name}`);
 
+      // Broadcast update to all connected web dashboard clients in real-time
+      broadcastUpdate();
+
       return res.status(200).json({
         status: 'success',
         action: 'rssi_scan',
@@ -170,6 +194,9 @@ async function scanPresence(req, res) {
         detectionMethod: 'auto',
         timestamp: new Date()
       });
+
+      // Broadcast update to all connected web dashboard clients in real-time
+      broadcastUpdate();
 
       return res.status(200).json({
         status: 'success',
@@ -241,6 +268,9 @@ async function manualOverride(req, res) {
 
     await logEvent('token_validation', req.user.email, ip, `Manual presence override logged for room ${room.name}`);
 
+    // Broadcast update to all connected web dashboard clients in real-time
+    broadcastUpdate();
+
     return res.status(200).json({
       status: 'success',
       action: 'manual_override',
@@ -263,74 +293,82 @@ async function manualOverride(req, res) {
   }
 }
 
+// Compile occupancy and headcount data metrics dynamically
+async function compileOccupancyData() {
+  const drill = await DrillSession.findOne({ where: { status: 'active' } });
+  if (!drill) {
+    return {
+      status: 'success',
+      action: 'dashboard_sync',
+      activeDrill: null,
+      message: 'No active earthquake drill session is currently active.',
+      rooms: [],
+      unverifiedList: [],
+      totalParticipants: 0,
+      verifiedCount: 0,
+      unverifiedCount: 0
+    };
+  }
+
+  // Gather rooms and active occupants baseline mapping
+  const rooms = await Room.findAll();
+  const occupancyLogs = await ClassroomOccupancy.findAll({
+    where: { drillId: drill.id }
+  });
+  
+  // Resolve User Identity mappings
+  const users = await User.findAll({
+    attributes: ['id', 'name', 'email', 'role', 'department']
+  });
+
+  // Compile Room Headcounts metrics
+  const roomHeadcounts = rooms.map(room => {
+    const logs = occupancyLogs.filter(l => l.roomId === room.id && l.status === 'verified');
+    const autoCount = logs.filter(l => l.detectionMethod === 'auto').length;
+    const manualCount = logs.filter(l => l.detectionMethod === 'manual').length;
+
+    return {
+      roomId: room.id,
+      roomName: room.name,
+      floor: room.floor,
+      totalHeadcount: logs.length,
+      autoRSSI: autoCount,
+      manualOverride: manualCount
+    };
+  });
+
+  // Compile Unverified student rosters for Safety Triaging
+  const unverifiedLogs = occupancyLogs.filter(l => l.status === 'Location-Unverified');
+  const unverifiedList = unverifiedLogs.map(log => {
+    const u = users.find(usr => usr.id === log.userId);
+    return {
+      userId: log.userId,
+      name: u?.name || 'Unknown Student',
+      email: u?.email || 'N/A',
+      role: u?.role || 'Student',
+      department: u?.department || 'BSCS'
+    };
+  });
+
+  return {
+    status: 'success',
+    action: 'dashboard_sync',
+    activeDrill: { id: drill.id, name: drill.name, activatedAt: drill.activatedAt },
+    rooms: roomHeadcounts,
+    unverifiedList,
+    totalParticipants: occupancyLogs.length,
+    verifiedCount: occupancyLogs.filter(l => l.status === 'verified').length,
+    unverifiedCount: unverifiedLogs.length,
+    message: 'Active drill baseline headcounts synchronizations complete.',
+    errors: []
+  };
+}
+
 // 5. Get Live Headcounts and Occupancy Baselines (Coordinator only)
 async function getOccupancyDashboard(req, res) {
   try {
-    const drill = await DrillSession.findOne({ where: { status: 'active' } });
-    if (!drill) {
-      return res.status(200).json({
-        status: 'success',
-        action: 'dashboard_sync',
-        activeDrill: null,
-        message: 'No active earthquake drill session is currently active.',
-        rooms: [],
-        unverifiedList: []
-      });
-    }
-
-    // Gather rooms and active occupants baseline mapping
-    const rooms = await Room.findAll();
-    const occupancyLogs = await ClassroomOccupancy.findAll({
-      where: { drillId: drill.id }
-    });
-    
-    // Resolve User Identity mappings
-    const users = await User.findAll({
-      attributes: ['id', 'name', 'email', 'role', 'department']
-    });
-
-    // Compile Room Headcounts metrics
-    const roomHeadcounts = rooms.map(room => {
-      const logs = occupancyLogs.filter(l => l.roomId === room.id && l.status === 'verified');
-      const autoCount = logs.filter(l => l.detectionMethod === 'auto').length;
-      const manualCount = logs.filter(l => l.detectionMethod === 'manual').length;
-
-      return {
-        roomId: room.id,
-        roomName: room.name,
-        floor: room.floor,
-        totalHeadcount: logs.length,
-        autoRSSI: autoCount,
-        manualOverride: manualCount
-      };
-    });
-
-    // Compile Unverified student rosters for Safety Triaging
-    const unverifiedLogs = occupancyLogs.filter(l => l.status === 'Location-Unverified');
-    const unverifiedList = unverifiedLogs.map(log => {
-      const u = users.find(usr => usr.id === log.userId);
-      return {
-        userId: log.userId,
-        name: u?.name || 'Unknown Student',
-        email: u?.email || 'N/A',
-        role: u?.role || 'Student',
-        department: u?.department || 'BSCS'
-      };
-    });
-
-    return res.status(200).json({
-      status: 'success',
-      action: 'dashboard_sync',
-      activeDrill: { id: drill.id, name: drill.name, activatedAt: drill.activatedAt },
-      rooms: roomHeadcounts,
-      unverifiedList,
-      totalParticipants: occupancyLogs.length,
-      verifiedCount: occupancyLogs.filter(l => l.status === 'verified').length,
-      unverifiedCount: unverifiedLogs.length,
-      message: 'Active drill baseline headcounts synchronizations complete.',
-      errors: []
-    });
-
+    const data = await compileOccupancyData();
+    return res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({
       status: 'error',
@@ -340,10 +378,34 @@ async function getOccupancyDashboard(req, res) {
   }
 }
 
+// 6. Expose Server-Sent Events (SSE) real-time stream for instant dashboard sync
+function registerRealtimeStream(req, res) {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Connection': 'keep-alive',
+    'Cache-Control': 'no-cache',
+    'Access-Control-Allow-Origin': '*'
+  });
+
+  // Immediately push the current drill baseline configuration to the newly connected dashboard client
+  compileOccupancyData().then(data => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  }).catch(err => console.error(err));
+
+  const clientId = Date.now();
+  const newClient = { id: clientId, res };
+  sseClients.push(newClient);
+
+  req.on('close', () => {
+    sseClients = sseClients.filter(c => c.id !== clientId);
+  });
+}
+
 module.exports = {
   startDrill,
   concludeDrill,
   scanPresence,
   manualOverride,
-  getOccupancyDashboard
+  getOccupancyDashboard,
+  registerRealtimeStream
 };

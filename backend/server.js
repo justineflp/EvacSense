@@ -43,6 +43,7 @@ app.put('/api/admin/requests/:id/reject', authorize(['System Admin']), authContr
 app.post('/api/drill/start', authorize(['System Admin', 'Drill Coordinator']), drillController.startDrill);
 app.post('/api/drill/conclude', authorize(['System Admin', 'Drill Coordinator']), drillController.concludeDrill);
 app.get('/api/presence/occupancy', authorize(['System Admin', 'Drill Coordinator']), drillController.getOccupancyDashboard);
+app.get('/api/presence/realtime', drillController.registerRealtimeStream);
 app.post('/api/presence/scan', authorize(['Student', 'Teacher']), drillController.scanPresence);
 app.post('/api/presence/manual', authorize(['Student', 'Teacher']), drillController.manualOverride);
 
@@ -63,7 +64,7 @@ async function initDatabase() {
     console.log('[DATABASE] SQLite connection established successfully.');
     
     // Sync tables to keep schemas clean
-    await sequelize.sync({ force: true });
+    await sequelize.sync();
     console.log('[DATABASE] Tables generated successfully.');
     
     // 1. Mock user seeding
@@ -122,7 +123,7 @@ async function initDatabase() {
       }
     ];
 
-    await User.bulkCreate(mockUsers);
+    await User.bulkCreate(mockUsers, { ignoreDuplicates: true });
     console.log(`[DATABASE] Seeded ${mockUsers.length} active CIT-U users.`);
 
     // 2. Room Coordinates Seeding
@@ -153,7 +154,7 @@ async function initDatabase() {
       }
     ];
 
-    await Room.bulkCreate(mockRooms);
+    await Room.bulkCreate(mockRooms, { ignoreDuplicates: true });
     console.log(`[DATABASE] Seeded ${mockRooms.length} school floor zones.`);
 
     // 3. Wi-Fi Access Points Seeding
@@ -181,7 +182,7 @@ async function initDatabase() {
       }
     ];
 
-    await AccessPoint.bulkCreate(mockAPs);
+    await AccessPoint.bulkCreate(mockAPs, { ignoreDuplicates: true });
     console.log(`[DATABASE] Seeded ${mockAPs.length} campus Wi-Fi Access Points.`);
     console.log('--- DEFAULT ACCOUNT PASSWORD: CITCCS2026! ---');
 
