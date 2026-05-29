@@ -371,11 +371,17 @@ export default function Dashboard({ user, token, onLogout }) {
       try {
         const data = JSON.parse(event.data);
         
-        if (data.status === 'success' && data.edge) {
+        if (data.type === 'route_recompute' || (data.status === 'success' && data.edge)) {
           // Live route/blockage recalculation update broadcasted via SSE!
           if (user.role === 'System Admin' || user.role === 'Drill Coordinator' || user.role === 'Teacher') {
             fetchGraph();
           }
+          return;
+        }
+
+        // If it is a partial event that is NOT a dashboard sync, ignore it to prevent state wipe
+        if (data.type && data.type !== 'dashboard_sync' && !data.rooms) {
+          console.log('[SSE] Received partial SSE update, ignoring to prevent state wipe:', data);
           return;
         }
         

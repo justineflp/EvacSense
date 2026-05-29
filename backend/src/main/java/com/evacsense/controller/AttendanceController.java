@@ -142,15 +142,7 @@ public class AttendanceController {
                     "Face biometric check-in succeeded. Confidence: " + result.confidence + "%");
 
             // Broadcast updates
-            Map<String, Object> ssePayload = new HashMap<>();
-            ssePayload.put("type", "checkin_update");
-            ssePayload.put("userId", studentId);
-            ssePayload.put("name", student.getName());
-            ssePayload.put("status", "Present");
-            ssePayload.put("method", "face");
-            ssePayload.put("timestamp", LocalDateTime.now().toString());
-            
-            drillController.triggerSSEBroadcast(ssePayload);
+            drillController.broadcastUpdate();
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");
@@ -174,14 +166,7 @@ public class AttendanceController {
                 sessionLogger.logEvent("failed_attempt", student.getEmail(), ip, 
                         "Face recognition lockout triggered after 3 failures");
 
-                Map<String, Object> ssePayload = new HashMap<>();
-                ssePayload.put("type", "marshal_review_required");
-                ssePayload.put("userId", studentId);
-                ssePayload.put("name", student.getName());
-                ssePayload.put("reason", "Biometric fingerprint scan lockout");
-                ssePayload.put("timestamp", LocalDateTime.now().toString());
-                
-                drillController.triggerSSEBroadcast(ssePayload);
+                drillController.broadcastUpdate();
             }
 
             Map<String, Object> response = new HashMap<>();
@@ -233,16 +218,7 @@ public class AttendanceController {
                     "Checked in peer classmate " + classmate.getName() + " (ID: " + classmateId + ")");
 
             // Broadcast SSE
-            Map<String, Object> ssePayload = new HashMap<>();
-            ssePayload.put("type", "checkin_update");
-            ssePayload.put("userId", classmateId);
-            ssePayload.put("name", classmate.getName());
-            ssePayload.put("status", "Present (Peer-Assisted)");
-            ssePayload.put("method", "peer-assisted");
-            ssePayload.put("companionName", companion.getName());
-            ssePayload.put("timestamp", LocalDateTime.now().toString());
-
-            drillController.triggerSSEBroadcast(ssePayload);
+            drillController.broadcastUpdate();
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");
@@ -305,16 +281,7 @@ public class AttendanceController {
                 "🚨 EMERGENCY DISTRESS ALERT TRIGGERED. Location: " + location);
 
         // Broadcast distress SSE
-        Map<String, Object> ssePayload = new HashMap<>();
-        ssePayload.put("type", "distress_alert");
-        ssePayload.put("userId", studentId);
-        ssePayload.put("name", student.getName());
-        ssePayload.put("role", student.getRole());
-        ssePayload.put("department", student.getDepartment() != null ? student.getDepartment() : "");
-        ssePayload.put("location", location != null ? location : "Unknown Area");
-        ssePayload.put("timestamp", LocalDateTime.now().toString());
-
-        drillController.triggerSSEBroadcast(ssePayload);
+        drillController.broadcastUpdate();
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
@@ -360,16 +327,7 @@ public class AttendanceController {
                 "Evacuation cleared manually by safety marshal: " + coordinator.getName());
 
         // Broadcast update
-        Map<String, Object> ssePayload = new HashMap<>();
-        ssePayload.put("type", "checkin_update");
-        ssePayload.put("userId", userId);
-        ssePayload.put("name", targetUser.getName());
-        ssePayload.put("status", "Present");
-        ssePayload.put("method", "manual-marshal");
-        ssePayload.put("verifiedBy", coordinator.getName());
-        ssePayload.put("timestamp", LocalDateTime.now().toString());
-
-        drillController.triggerSSEBroadcast(ssePayload);
+        drillController.broadcastUpdate();
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");

@@ -22,7 +22,7 @@ public class AuditLog {
     @Column(nullable = false)
     private LocalDateTime timestamp = LocalDateTime.now();
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 65535)
     private String details;
 
     // Constructors

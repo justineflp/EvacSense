@@ -163,6 +163,8 @@ public class NavigationController {
 
         // Broadcaster SSE route recomputation
         Map<String, Object> ssePayload = new HashMap<>();
+        ssePayload.put("status", "success");
+        ssePayload.put("edge", edge);
         ssePayload.put("type", "route_recompute");
         ssePayload.put("edgeId", edgeId);
         ssePayload.put("isBlocked", edge.getIsBlocked());

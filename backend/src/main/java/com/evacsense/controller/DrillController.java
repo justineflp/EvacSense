@@ -359,7 +359,7 @@ public class DrillController {
         }
     }
 
-    private void broadcastUpdate() {
+    public void broadcastUpdate() {
         Map<String, Object> data = compileOccupancyData();
         triggerSSEBroadcast(data);
     }
