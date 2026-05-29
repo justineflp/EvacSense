@@ -205,8 +205,6 @@ EvacSense interfaces with the following hardware components:
 
 •        Pathfinding Library: Dijkstra's or A* algorithm implementation (e.g., via a graph library such as NetworkX for Python or a JS equivalent) for computing shortest evacuation routes
 
-             •        Photo-Based Mapping & Navigation Interface: A panorama or image-rendering library (e.g.,                     ReactPhoto Sphere Viewer, Marzipano, or customized image overlays). 
-
 •        Push Notification Service: Firebase Cloud Messaging (FCM) for sending real-time alerts and drill initiation notifications to mobile devices.. 
 
 •        Authentication: JSON Web Tokens (JWT) for session management; integration with Microsoft Outlook-based institutional accounts through Microsoft Authentication / Microsoft Entra ID for Single Sign-On.
@@ -327,12 +325,11 @@ This module is responsible for detecting and logging the presence of students, t
 | Goal | To automatically detect, evaluate, and record the presence of all students in their assigned classrooms at the exact moment the drill begins, establishing a navigation origin and missing-person baseline.  |
 | Preconditions | Institutional floor layouts and classroom seating assignments are registered in the database. Campus Wi-Fi access points are active and reachable. Students have their mobile devices with Wi-Fi enabled. |
 | Main Flow | The Safety Officer activates the scheduled earthquake drill session from the web dashboard. The system immediately initiates automated classroom detection by pinging the Wi-Fi presence of registered student devices across all mapped rooms.  The system captures device identifiers and RSSI signal strength readings from nearby student mobile devices. The system evaluates the RSSI boundaries and cross-references the detected devices with the registered student database. For every verified match, the system logs the student's presence with a drill-start timestamp and sets their detected classroom as their navigation origin.  The system instantly populates the real-time classroom attendance list on the Safety Officer's dashboard. |
-| Alternative Flow (Undetected or Unverified Signal):  | A1. Signal Unavailable/Weak: If a registered student's device is not detected during the initial scan (e.g., device off, no Wi-Fi, or signal falls below the valid RSSI threshold), the system automatically flags that student as Location-Unverified on the dashboard. This flags them for manual follow-up during the evacuation assembly phase.  |
+| Alternative Flow (Device Not Reachable):  | A1. Device Not Reachable (from Step 3): The system flags the student as Location-Unverified on the Drill Coordinator dashboard and does not assign a confirmed navigation origin for the student.  |
+| Alternative Flow (Weak but Active Signal ):  | A1. Weak but Active Signal (from Step 4): The system logs the detection as Low-Confidence Detection with the timestamp and RSSI value. A2. The system assigns the student’s registered classroom as the tentative navigation origin and displays a Low-Confidence Detection indicator beside the student’s name on the Drill Coordinator dashboard.  |
 | Postconditions | The pre-drill classroom presence baseline is finalized and stored in the database. Navigation origin points are set for all verified students. Unverified students are flagged on the dashboard. |
 
 ##### Activity Diagram :
-
-##### 
 
 ##### 
 
@@ -348,13 +345,15 @@ This module is responsible for detecting and logging the presence of students, t
 
 Display Evacuation Route
 
-| Use Case Name | Display Evacuation Route |
+| Use Case Name | View Evacuation Route |
 |---| ---| 
 | Primary Actor | Student |
 | Goal | To provide the student with the safest and shortest evacuation route from their current classroom location to the assigned assembly area. |
-| Preconditions | A drill session is currently active. The student is logged into the mobile application with Wi-Fi enabled. The school map and evacuation routes have been configured by the Drill Coordinator. |
-| Main Flow | The Student receives a drill notification and opens the evacuation screen in the mobile application. The system automatically detects the Student's current indoor location using Wi-Fi RSSI signals. The system retrieves the Student's assigned evacuation assembly area from the database. The system calculates the shortest evacuation path from the detected location to the assembly area using the pre-mapped building graph. The system displays the route and active turn-by-turn navigation instructions on the Student's device. The Student follows the displayed route to safely evacuate. |
-| Alternative Flow | A1. Weak Wi-Fi Signal: If the indoor location cannot be detected automatically, the system prompts the Student to manually select their current room from a dropdown list before computing the path. A2. Network Connection Lost: If the network connection drops during the drill, the system gracefully notifies the Student of the offline status rather than crashing, pausing real-time updates until the connection is restored. A3. No Valid Route: If a configuration error results in no valid path being found, the system displays an alert directing the Student to the nearest default safe exit. |
+| Preconditions | A drill session is currently active. The student is logged into the mobile application with Wi-Fi enabled and location permissions granted.  The school map and evacuation routes have been configured by the Drill Coordinator. |
+| Main Flow | The Student opens the evacuation screen in the mobile application. The system retrieves the Student's navigation origin (established in Module 2) and automatically detects the Student's current indoor location using Wi-Fi RSSI signals. The system retrieves the Student's assigned evacuation assembly area from the database. The system calculates the shortest evacuation path from the detected location to the assembly area using the pre-mapped building graph. The system displays the route and active turn-by-turn navigation instructions on the Student's device within 2 seconds of drill session start, and caches the route locally. The Student follows the displayed route to safely evacuate. |
+| Alternative Flow (Weak Wi-Fi Signal):  | At Step 2: If the indoor location cannot be detected automatically at Step 2, the system prompts the Student to manually select their current room from a dropdown list before computing the path.  |
+| Alternative Flow (Network Connection Lost):  | At Step 6: If the network connection drops during the drill at Step 6, the system gracefully notifies the Student of the offline status rather than crashing, pausing real-time updates until the connection is restored while keeping the cached static route visible.  |
+| Alternative Flow (No Valid Route):  | At Step 4: If a configuration error results in no valid path being found at Step 4, the system displays an alert directing the Student to the nearest default safe exit.  |
 | Postconditions | The Student successfully receives navigation guidance. The detected location and route details are logged as the navigation origin for the drill session. |
 
 Configure Evacuation Routes
@@ -365,7 +364,7 @@ Configure Evacuation Routes
 | Goal | To configure the evacuation routes, exits, corridors, staircases, and assembly areas that the system will use to compute shortest-path navigation.  |
 | Preconditions | The Drill Coordinator is securely logged into the web dashboard. The baseline school floor plans, buildings, and rooms are already registered in the system. |
 | Main Flow | The Drill Coordinator opens the evacuation route configuration page on the dashboard. The system displays the interactive school floor plan. The Drill Coordinator selects and connects rooms, corridors, exits, and staircases to map the valid pathways. The Drill Coordinator assigns specific evacuation zones and safe exits. The system validates the route connectivity to ensure all paths are accessible and logical. The Drill Coordinator saves the configured evacuation map. The system successfully stores the route configuration in the database and confirms the update. |
-| Alternative Flow | A1. Conflicting Routes: If the system detects duplicate, dead-end, or conflicting evacuation routes during validation, it pauses the save process and prompts the Coordinator to review and resolve the specific conflicts.  |
+| Alternative Flow (Conflicting Routes): | At Step 5: If the system detects duplicate, dead-end, or conflicting evacuation routes during validation, it pauses the save process and prompts the Coordinator to review and resolve the specific conflicts.  |
 | Postconditions | Evacuation routes are stored successfully. The mapped graph becomes immediately available for shortest-path computations when a drill is initiated. |
 
 ##### Activity Diagram :
@@ -390,7 +389,8 @@ Detect Arrival via WIFI
 | Supporting Actor | Companion |
 | Goal | To detect, verify, and accurately record the arrival of students at the evacuation assembly area using Wi-Fi, ID input, and facial recognition, while allowing peer-assisted check-ins.  |
 | Preconditions |  The evacuation drill is active.  The Student's device has Wi-Fi enabled. |
-| Main Flow | 1. The Student arrives at the assembly area, and their device connects to the designated evacuation Wi-Fi access point. 2. The system detects the arrival and prompts the Student to input their Student ID number. 3. The Student inputs their ID, and the system validates it against the database. 4. Upon successful ID validation, the system marks the Student as "Present" in the attendance log. |
+| Main Flow | 1. The Student arrives at the assembly area, and their device connects to the designated evacuation Wi-Fi access point. 2. The system detects the arrival (targeting 90% detection accuracy) and prompts the Student to input their Student ID number.  3. The Student inputs their ID, and the system validates it against the database. 4. Upon successful ID validation, the system marks the Student as "Present" in the attendance log. |
+| Alternative Flow (Wi-Fi Detection Failure ):  | At Step 2: If the system fails to detect the student's arrival via Wi-Fi automatically, the student manually taps the "I Have Arrived" button on the app dashboard to force Step 3.  |
 | Postconditions | The student's attendance is securely authenticated and recorded.  |
 
 Perform Face Recognition
@@ -399,9 +399,9 @@ Perform Face Recognition
 |---| ---| 
 | Primary Actor | Student, Companion  |
 | Goal | To securely verify the identity of the student by comparing a live photo capture against their registered database profile.  |
-| Preconditions |   A valid Student ID has just been submitted to the system.  |
-| Main Flow | 1. The system activates the mobile device camera. 2. The user (Student or Companion) captures a clear photo of the Student's face. 3. The system analyzes the photo and compares it against the registered profile photo in the database. 4. The system confirms a match (with >95% confidence). 5. The system returns a Verification Success status to the parent use case. |
-| Alternative Flow  | A1. Poor Quality / Mismatch: If the photo is blurry or does not match, the system prompts the user to retry (up to 3 times). If it fails 3 times, the system flags the student for manual marshal verification.  |
+| Preconditions |   A valid Student ID has just been submitted to the system via direct arrival or peer-assist.  |
+| Main Flow | 1. The system activates the mobile device camera. 2. The user (Student or Companion) captures a clear photo of the Student's face. 3. The system analyzes the photo and compares it against the registered profile photo in the database. 4. The system confirms a match (achieving at least an 85% match rate under controlled lighting conditions).  5. The system returns a Verification Success status to the parent use case. |
+| Alternative Flow (Poor Quality / Mismatch): | At step 4: If the photo is blurry or does not meet the 85% match threshold, the system prompts the user to retry (up to 3 times). If it fails 3 times, the system flags the student for manual marshal verification.  |
 | Postconditions | The student's identity is securely authenticated.  |
 
 Accept Peer Photo 
@@ -411,7 +411,8 @@ Accept Peer Photo
 | Primary Actor | Companion  |
 | Goal | To allow a student with a mobile device to check in a classmate who does not have a smartphone.  |
 | Preconditions | The Companion is logged into the EvacSense application at the assembly area.  |
-| Main Flow | 1. The Companion selects the Peer-Assist feature on their dashboard. 2. The Companion inputs the Student ID of their classmate. 3. The system validates the ID against the database. 4. The system triggers the Perform Face Recognition use case (<<include>>). 5. Upon receiving verification success, the system logs the classmate's attendance as "Present (Peer-Assisted)." |
+| Main Flow | 1. The Companion selects the Peer-Assist feature on their dashboard. 2. The Companion inputs the Student ID of their classmate. 3. The system validates the ID against the database. 4. The system triggers the Perform Face Recognition use case . 5. Upon receiving verification success, the system logs the classmate's attendance as "Present (Peer-Assisted)." |
+| Alternative Flow (Invalid Student ID ): | At Step 3: If the inputted Student ID does not exist in the database, the system displays an "ID Not Found" error and prompts the Companion to re-enter the number.  |
 | Postconditions | The student's arrival sequence is initiated and handed over to the biometric system.  |
 
 Activate Distress Alert 
@@ -422,30 +423,12 @@ Activate Distress Alert
 | Goal | To immediately notify the Safety Officer that a student requires emergency assistance.  |
 | Preconditions | The user has the EvacSense application open.  |
 | Main Flow | 1. The user presses the "Distress Alert" button on their mobile interface. 2. The system immediately captures the user's ID, current time, and last known location. 3. The system logs the distress signal in the database. 4. The system pushes an urgent pop up notification to the Safety Officer's dashboard. |
+| Alternative Flow (Offline Alert):  | At Step 3: If the user has no network connection when pressing the button, the system caches the distress alert locally and aggressively attempts to transmit it in the background the moment a connection is re-established.  |
 | Postconditions | The emergency alert is successfully transmitted to the administration dashboard.  |
 
 ##### Activity Diagram :
 
 ##### Wireframe :
-
-#### 4.2 Evacuation Monitoring and Alerts 
-
- Use Case Diagram :
-
-##### Use Case Description :
-
-| Use  Case Name | Monitor Dashboard and Alerts |
-|---| ---| 
-| Primary Actor | Safety Officer  |
-| Goal | To monitor real-time evacuation attendance, oversee distress alerts, and identify unaccounted students through automated missing-person flags.  |
-| Preconditions |  The evacuation drill is active.  The Safety Officer is logged into the EvacSense dashboard. |
-| Main Flow | 1. The Safety Officer views the live monitoring dashboard as students arrive at the assembly area. 2. The system continuously updates the dashboard with verified attendance records processed from the mobile application. 3. The system tracks the elapsed time against the target evacuation time limit. 4. If the target evacuation time expires, the system automatically cross-references the attendance list with the pre-drill classroom presence list (established in Module 2). 5. The system automatically generates a "Missing-Person Alert" on the dashboard for any student who was present in their classroom but has not checked in at the evacuation area. |
-| Alternative Flow (Distress)  | A1. Distress Signal Received: If a student triggers a Distress Alert, the system immediately pushes an urgent visual and audio notification to the dashboard. The Safety Officer reviews the alert details (name, location) to initiate a targeted rescue response.  |
-| Postconditions |  The Safety Officer has an accurate, real-time view of present, missing, and distressed students.  |
-
-Activity Diagram:
-
-WireFrame:
 
 ### Module 5 : Post - Drill Monitoring and Real - Time Reporting
 
@@ -499,7 +482,7 @@ This module provides drill coordinators with live monitoring tools and post-dril
 
 ##### •        Live dashboard updates must reflect changes within 5 seconds of an event occurring.
 
-##### •        Attendance confirmation (Face recognition or Wi-Fi detection) must be processed and logged within 2 seconds. 
+##### •       Wi-Fi access point detection must achieve at least 90% accuracy for devices within range, and subsequent attendance confirmation (Face recognition or Wi-Fi detection) must be processed and logged within 2 seconds.  
 
 ##### •        The backend API must maintain an average response time of under 500ms for all endpoints under normal load.
 
@@ -518,6 +501,8 @@ This module provides drill coordinators with live monitoring tools and post-dril
 ##### •        Session tokens must expire after 1 hour of inactivity; all sessions must be invalidated upon logout.
 
 ##### •        The system must log all authentication events (login, logout, failed attempts) with timestamps for audit purposes.
+
+ •     The system must filter and process Wi-Fi scanning, presence detection, and attendance verification      data exclusively from registered student devices; any unauthorized, spoofed, or unregistered device identifiers must be systematically ignored to maintain data integrity and optimize backend performance. 
 
 ##### 
 

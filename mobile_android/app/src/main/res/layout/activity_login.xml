@@ -136,14 +136,14 @@
                 android:layout_marginBottom="10dp"
                 android:textAllCaps="true" />
 
-            <!-- Google Button -->
+            <!-- Microsoft Button -->
             <Button
-                android:id="@+id/googleSsoButton"
+                android:id="@+id/microsoftSsoButton"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:text="Sign in with Google"
-                android:backgroundTint="#FFFFFF"
-                android:textColor="#1E293B"
+                android:text="Sign in with Microsoft"
+                android:backgroundTint="#00A4EF"
+                android:textColor="#FFFFFF"
                 android:textStyle="bold" />
 
         </LinearLayout>
@@ -157,6 +157,32 @@
             android:textColor="#94A3B8"
             android:textSize="12sp"
             android:layout_marginTop="24dp"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <!-- Registration Link -->
+        <TextView
+            android:id="@+id/goToRegisterButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Don't have an institutional account? Register Here"
+            android:textColor="#F59E0B"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <!-- Server Connection Config -->
+        <TextView
+            android:id="@+id/configServerUrlButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚙️ Configure API Server URL"
+            android:textColor="#64748B"
+            android:textSize="12sp"
+            android:layout_marginTop="40dp"
+            android:layout_marginBottom="24dp"
             android:clickable="true"
             android:focusable="true" />
 

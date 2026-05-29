@@ -77,12 +77,8 @@ class PresenceActivity : AppCompatActivity() {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         roomSpinner.adapter = adapter
 
-        // Setup Retrofit Client
-        val retrofit = Retrofit.Builder()
-            .baseUrl(AuthService.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        authService = retrofit.create(AuthService::class.java)
+        // Setup dynamic API Service
+        authService = ApiClient.getService(this)
 
         triggerScanButton.setOnClickListener { handleAutoRSSIScan() }
         submitManualButton.setOnClickListener { handleManualOverride() }

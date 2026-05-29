@@ -49,12 +49,8 @@ class NavigationActivity : AppCompatActivity() {
         distressButton = findViewById(R.id.distressButton)
         backButton = findViewById(R.id.backButton)
 
-        // Setup Retrofit Client
-        val retrofit = Retrofit.Builder()
-            .baseUrl(AuthService.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        authService = retrofit.create(AuthService::class.java)
+        // Setup dynamic API Service
+        authService = ApiClient.getService(this)
 
         backButton.setOnClickListener { finish() }
         distressButton.setOnClickListener { handleDistressAlert() }

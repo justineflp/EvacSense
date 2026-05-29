@@ -49,5 +49,10 @@
             android:name=".NavigationActivity"
             android:exported="false" />
 
+        <!-- Assembly Area Check-In Activity (Module 4) -->
+        <activity
+            android:name=".CheckInActivity"
+            android:exported="false" />
+
     </application>
 </manifest>

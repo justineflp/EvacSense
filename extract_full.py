@@ -104,8 +104,8 @@ def get_table_text(tbl_elem, namespaces):
     return "\n".join(table_lines)
 
 if __name__ == '__main__':
-    srs_path = r"c:\Users\Justine Filip\Desktop\EvacSense\SRS FOR EVACSENSE (1).docx"
-    sdd_path = r"c:\Users\Justine Filip\Desktop\EvacSense\SDD EvacSens (1).docx"
+    srs_path = r"c:\Users\Justine Filip\Desktop\EvacSense\SRS FOR EVACSENSE (4).docx"
+    sdd_path = r"c:\Users\Justine Filip\Desktop\EvacSense\SDD EvacSens .docx"
     
     print("Running full extraction for SRS...")
     srs_text = extract_docx_text_full(srs_path)

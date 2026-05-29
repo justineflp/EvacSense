@@ -9,22 +9,24 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var emailInput: EditText
     private lateinit var passwordInput: EditText
     private lateinit var loginButton: Button
-    private lateinit var googleSsoButton: Button
+    private lateinit var microsoftSsoButton: Button
     private lateinit var recoveryButton: TextView
     private lateinit var errorText: TextView
     private lateinit var loadingProgress: ProgressBar
+    
+    private lateinit var goToRegisterButton: TextView
+    private lateinit var configServerUrlButton: TextView
 
     private lateinit var authService: AuthService
 
@@ -36,33 +38,38 @@ class LoginActivity : AppCompatActivity() {
         emailInput = findViewById(R.id.emailInput)
         passwordInput = findViewById(R.id.passwordInput)
         loginButton = findViewById(R.id.loginButton)
-        googleSsoButton = findViewById(R.id.googleSsoButton)
+        microsoftSsoButton = findViewById(R.id.microsoftSsoButton)
         recoveryButton = findViewById(R.id.recoveryButton)
         errorText = findViewById(R.id.errorText)
         loadingProgress = findViewById(R.id.loadingProgress)
+        goToRegisterButton = findViewById(R.id.goToRegisterButton)
+        configServerUrlButton = findViewById(R.id.configServerUrlButton)
 
-        // Initialize Retrofit Client
-        // Note: Change BASE_URL inside AuthService to match your server network configurations
-        val retrofit = Retrofit.Builder()
-            .baseUrl(AuthService.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+        // Initialize dynamic API Service
+        authService = ApiClient.getService(this)
 
-        authService = retrofit.create(AuthService::class.java)
+        // Update server URL configuration display text
+        updateServerUrlButtonText()
 
         // Check if token exists in SharedPreferences for session auto-login
         checkExistingSession()
 
         // Set Click Listeners
         loginButton.setOnClickListener { handleLogin() }
-        googleSsoButton.setOnClickListener { handleGoogleSSO() }
+        microsoftSsoButton.setOnClickListener { handleMicrosoftSSO() }
         recoveryButton.setOnClickListener { handleAccountRecovery() }
 
-        // brandTitle click opens the registration screen
+        // Both goToRegisterButton and brandTitle click open the registration screen
+        goToRegisterButton.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
+        }
         val brandTitle: TextView = findViewById(R.id.brandTitle)
         brandTitle.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
+
+        // Configure Server URL click
+        configServerUrlButton.setOnClickListener { showServerUrlConfigDialog() }
     }
 
     private fun checkExistingSession() {
@@ -135,22 +142,22 @@ class LoginActivity : AppCompatActivity() {
 
             override fun onFailure(call: Call<AuthResponse>, t: Throwable) {
                 showLoading(false)
-                showError("Cannot connect to EvacSense API. Check server connection.")
+                showError("Cannot connect to EvacSense API.\nIf on a physical device, tap 'Configure API Server URL' at the bottom to set your computer's local IP.")
             }
         })
     }
 
-    private fun handleGoogleSSO() {
+    private fun handleMicrosoftSSO() {
         errorText.visibility = View.GONE
-        // For simulation purposes, we trigger Google SSO with student account USR-001
+        // For simulation purposes, we trigger Microsoft SSO with student account USR-001
         showLoading(true)
-        val request = GoogleSSORequest(
+        val request = MicrosoftSSORequest(
             email = "m.santos@student.cit.edu",
             name = "Maria Santos",
-            googleToken = "SIMULATED_SSO_GOOGLE_TOKEN_12345"
+            microsoftToken = "SIMULATED_SSO_MICROSOFT_TOKEN_12345"
         )
 
-        authService.googleSSO(request).enqueue(object : Callback<AuthResponse> {
+        authService.microsoftSSO(request).enqueue(object : Callback<AuthResponse> {
             override fun onResponse(call: Call<AuthResponse>, response: Response<AuthResponse>) {
                 showLoading(false)
                 val body = response.body()
@@ -162,13 +169,13 @@ class LoginActivity : AppCompatActivity() {
                         navigateToDashboard(user)
                     }
                 } else {
-                    showError(body?.message ?: "Google SSO assertion failed.")
+                    showError(body?.message ?: "Microsoft SSO assertion failed.")
                 }
             }
 
             override fun onFailure(call: Call<AuthResponse>, t: Throwable) {
                 showLoading(false)
-                showError("Google SSO connection failed.")
+                showError("Microsoft SSO connection failed.")
             }
         })
     }
@@ -234,6 +241,44 @@ class LoginActivity : AppCompatActivity() {
     private fun showLoading(isLoading: Boolean) {
         loadingProgress.visibility = if (isLoading) View.VISIBLE else View.GONE
         loginButton.isEnabled = !isLoading
-        googleSsoButton.isEnabled = !isLoading
+        microsoftSsoButton.isEnabled = !isLoading
+    }
+
+    private fun updateServerUrlButtonText() {
+        val sharedPref = getSharedPreferences("evacsense_prefs", Context.MODE_PRIVATE)
+        val serverUrl = sharedPref.getString("server_url", AuthService.BASE_URL) ?: AuthService.BASE_URL
+        configServerUrlButton.text = "⚙️ Configure API Server URL\n(Current: $serverUrl)"
+    }
+
+    private fun showServerUrlConfigDialog() {
+        val sharedPref = getSharedPreferences("evacsense_prefs", Context.MODE_PRIVATE)
+        val currentUrl = sharedPref.getString("server_url", AuthService.BASE_URL) ?: AuthService.BASE_URL
+
+        val input = EditText(this).apply {
+            setText(currentUrl)
+            setSelection(currentUrl.length)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+            setPadding(50, 30, 50, 30)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Configure API Server URL")
+            .setMessage("Enter the backend API server base URL. (For local physical phones, use your computer's Wi-Fi IP, e.g. http://192.168.1.15:5000/)")
+            .setView(input)
+            .setPositiveButton("Save") { dialog, _ ->
+                val newUrl = input.text.toString().trim()
+                if (newUrl.isNotEmpty()) {
+                    sharedPref.edit().putString("server_url", newUrl).apply()
+                    ApiClient.reset()
+                    authService = ApiClient.getService(this)
+                    updateServerUrlButtonText()
+                    Toast.makeText(this, "API Server URL updated successfully!", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "URL cannot be empty.", Toast.LENGTH_SHORT).show()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 }

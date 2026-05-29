@@ -71,12 +71,8 @@ class RegisterActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
-        // Initialize Retrofit Client
-        val retrofit = Retrofit.Builder()
-            .baseUrl(AuthService.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        authService = retrofit.create(AuthService::class.java)
+        // Initialize dynamic API Service
+        authService = ApiClient.getService(this)
 
         registerButton.setOnClickListener { handleRegisterSubmit() }
         backToLoginButton.setOnClickListener { finish() } // Returns to Login screen

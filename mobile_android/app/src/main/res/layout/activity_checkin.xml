@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#020617">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Stylized Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Assembly Area Check-In Suite"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CIT-U Field Safe Zone"
+            android:textColor="#10B981"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:letterSpacing="0.1"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Caching/Offline Status Banner -->
+        <LinearLayout
+            android:id="@+id/networkStateBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#064E3B"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/networkStateText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🟢 ACTIVE — SYNCHRONIZED WITH CLOUD"
+                android:textColor="#34D399"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Section: Arrival Detection Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#0F172A"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="1. Wi-Fi Arrival Zone Detection"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/arrivalStatusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Status: Waiting for verification scan..."
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gap="8dp">
+
+                <Button
+                    android:id="@+id/detectArrivalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:text="Scan Signal"
+                    android:backgroundTint="#0EA5E9"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/manualArrivalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:text="Force Check-In"
+                    android:backgroundTint="#475569"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Section: 2FA Biometrics Verification Panel -->
+        <LinearLayout
+            android:id="@+id/biometricsCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#0F172A"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="4dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="2. 2FA Face Biometrics Verification"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/studentVerifiedText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Validated student name..."
+                android:textColor="#F59E0B"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Simulated Viewfinder -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:background="#1E293B"
+                android:layout_marginBottom="12dp"
+                android:layout_gravity="center">
+
+                <TextView
+                    android:id="@+id/viewfinderPlaceholder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="📷 Simulated Viewfinder (Alight Face)"
+                    android:textColor="#64748B"
+                    android:textSize="12sp" />
+
+                <!-- Overlay indicator -->
+                <View
+                    android:layout_width="140dp"
+                    android:layout_height="140dp"
+                    android:layout_gravity="center"
+                    android:background="@android:color/transparent"
+                    style="?android:attr/borderDrawable" />
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/faceStatusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Please look into the simulated camera..."
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/attemptsText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Attempts Remaining: 3"
+                android:textColor="#EF4444"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <Button
+                android:id="@+id/captureFaceButton"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="Capture Facial Biometrics"
+                android:backgroundTint="#10B981"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Section: Companion Check-In (Peer-Assisted) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#0F172A"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:elevation="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Companion Check-In (Peer-Assisted)"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Register attendance on behalf of a peer in need."
+                android:textColor="#64748B"
+                android:textSize="11sp"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/peerStudentIdInput"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Classmate's Student ID (e.g. USR-005)"
+                android:textColorHint="#64748B"
+                android:textColor="#FFFFFF"
+                android:inputType="text"
+                android:background="#020617"
+                android:padding="10dp"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:id="@+id/peerNameText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#34D399"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gap="8dp">
+
+                <Button
+                    android:id="@+id/verifyPeerButton"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:text="Verify Classmate ID"
+                    android:backgroundTint="#475569"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/capturePeerFaceButton"
+                    android:layout_width="0dp"
+                    android:layout_height="45dp"
+                    android:layout_weight="1"
+                    android:text="Perform Peer Check-In"
+                    android:backgroundTint="#10B981"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:enabled="false" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Section: Distress Trigger -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#1E1E38"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🚨 EMERGENCY DISTRESS BEACON"
+                android:textColor="#EF4444"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Trigger an immediate emergency signal with last known location coordinates. Dispatches safety marshals instantly."
+                android:textColor="#94A3B8"
+                android:textSize="11sp"
+                android:layout_marginBottom="12dp" />
+
+            <Button
+                android:id="@+id/distressButton"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="TRIGGER BEACON NOW"
+                android:backgroundTint="#EF4444"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Return Control -->
+        <Button
+            android:id="@+id/backToDashboardButton"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="Back to Portal Dashboard"
+            android:backgroundTint="#334155"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:layout_marginBottom="32dp" />
+
+    </LinearLayout>
+</ScrollView>

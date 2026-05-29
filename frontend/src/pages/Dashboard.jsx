@@ -16,6 +16,17 @@ export default function Dashboard({ user, token, onLogout }) {
   const [unverifiedCount, setUnverifiedCount] = useState(0);
   const [loadingDrill, setLoadingDrill] = useState(false);
 
+  // Module 4 & 5 live states
+  const [arrivedCount, setArrivedCount] = useState(0);
+  const [distressCount, setDistressCount] = useState(0);
+  const [distressList, setDistressList] = useState([]);
+  const [missingList, setMissingList] = useState([]);
+  const [floorClearances, setFloorClearances] = useState([]);
+  const [drillsList, setDrillsList] = useState([]);
+  const [selectedReportId, setSelectedReportId] = useState('');
+  const [reportData, setReportData] = useState(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+
   // Admin/Coordinator Operations Messages
   const [actionMessage, setActionMessage] = useState('');
   const [actionError, setActionError] = useState('');
@@ -254,6 +265,11 @@ export default function Dashboard({ user, token, onLogout }) {
         setTotalParticipants(data.totalParticipants || 0);
         setVerifiedCount(data.verifiedCount || 0);
         setUnverifiedCount(data.unverifiedCount || 0);
+        setArrivedCount(data.arrivedCount || 0);
+        setDistressCount(data.distressCount || 0);
+        setDistressList(data.distressList || []);
+        setMissingList(data.missingList || []);
+        setFloorClearances(data.floorClearances || []);
       }
     } catch (err) {
       console.error('Failed to sync live drill occupancy state:', err);
@@ -267,6 +283,77 @@ export default function Dashboard({ user, token, onLogout }) {
     fetchPendingRequests();
   };
 
+  // Play distress emergency sawtooth audio tone
+  const playDistressSound = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+    } catch (err) {}
+  };
+
+  // Manual Safety Marshal Clear Override
+  const handleMarshalClear = async (targetUserId) => {
+    setActionMessage('');
+    setActionError('');
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/api/checkin/clear/${targetUserId}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        setActionMessage(data.message);
+        fetchDrillState();
+      } else {
+        setActionError(data.message || 'Marshal override failed.');
+      }
+    } catch (err) {
+      setActionError('Connection to override API failed.');
+    }
+  };
+
+  // Module 5 Report Generation Helpers
+  const fetchDrillsList = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:5000/api/reports/list', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        setDrillsList(data.drills || []);
+      }
+    } catch (err) {
+      console.error("Failed to load drills list:", err);
+    }
+  };
+
+  const loadReportDetails = async (drillId) => {
+    if (!drillId) return;
+    setLoadingReport(true);
+    setReportData(null);
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/api/reports/report/${drillId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        setReportData(data.report);
+      }
+    } catch (err) {
+      console.error("Failed to load report analytics:", err);
+    } finally {
+      setLoadingReport(false);
+    }
+  };
+
   useEffect(() => {
     if (user.role === 'System Admin') {
       syncAdminData();
@@ -277,6 +364,7 @@ export default function Dashboard({ user, token, onLogout }) {
 
     if (user.role === 'System Admin' || user.role === 'Drill Coordinator' || user.role === 'Teacher') {
       fetchGraph();
+      fetchDrillsList();
     }
 
     sseSource.onmessage = (event) => {
@@ -297,6 +385,15 @@ export default function Dashboard({ user, token, onLogout }) {
         setTotalParticipants(data.totalParticipants || 0);
         setVerifiedCount(data.verifiedCount || 0);
         setUnverifiedCount(data.unverifiedCount || 0);
+        setArrivedCount(data.arrivedCount || 0);
+        
+        if (data.distressCount > distressCount) {
+          playDistressSound();
+        }
+        setDistressCount(data.distressCount || 0);
+        setDistressList(data.distressList || []);
+        setMissingList(data.missingList || []);
+        setFloorClearances(data.floorClearances || []);
       } catch (err) {
         console.error('[SSE REAL-TIME ERROR] Parsing pushed frame failed:', err);
       }
@@ -601,8 +698,7 @@ export default function Dashboard({ user, token, onLogout }) {
             )}
           </div>
         )}
-
-        {/* Coordinators & Admin Live Dashboards Panel (Modules 1 & 2) */}
+        {/* Coordinators & Admin Live Dashboards Panel (Modules 1, 2, 4 & 5) */}
         {(user.role === 'System Admin' || user.role === 'Drill Coordinator') && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', width: '100%' }}>
             
@@ -637,38 +733,99 @@ export default function Dashboard({ user, token, onLogout }) {
                 </div>
               </div>
 
+              {/* Status Ring Cockpit Metric Widgets */}
               {activeDrill && (
                 <div style={{
-                  marginTop: '1.5rem',
-                  padding: '1rem 1.25rem',
-                  background: 'rgba(251, 191, 36, 0.04)',
-                  border: '1px solid rgba(251, 191, 36, 0.15)',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '1.5rem',
+                  marginTop: '1.5rem'
                 }}>
-                  <div>
-                    <span style={{ color: 'var(--accent-gold)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', tracking: '0.05em' }}>⚠️ LIVE DRILL ACTIVE:</span>
-                    <strong style={{ color: '#ffffff', display: 'block', fontSize: '1.05rem', marginTop: '0.15rem' }}>{activeDrill.name}</strong>
+                  <div className="glass-panel" style={{ padding: '1.25rem', textAlign: 'left', borderLeft: '4px solid #3b82f6', background: 'rgba(255,255,255,0.01)', borderRadius: '12px' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Total Registered</span>
+                    <strong style={{ fontSize: '1.75rem', color: '#ffffff', display: 'block', marginTop: '0.25rem' }}>{totalParticipants}</strong>
                   </div>
-                  <div style={{ display: 'flex', gap: '2rem', textAlign: 'right' }}>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', display: 'block' }}>Total Registered</span>
-                      <strong style={{ fontSize: '1.15rem', color: '#ffffff' }}>{totalParticipants}</strong>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', display: 'block' }}>Verified Origins</span>
-                      <strong style={{ fontSize: '1.15rem', color: '#10b981' }}>{verifiedCount}</strong>
-                    </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', textTransform: 'uppercase', display: 'block' }}>Location Unverified</span>
-                      <strong style={{ fontSize: '1.15rem', color: '#ef4444' }}>{unverifiedCount}</strong>
-                    </div>
+                  <div className="glass-panel" style={{ padding: '1.25rem', textAlign: 'left', borderLeft: '4px solid #10b981', background: 'rgba(255,255,255,0.01)', borderRadius: '12px' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Safely Arrived</span>
+                    <strong style={{ fontSize: '1.75rem', color: '#10b981', display: 'block', marginTop: '0.25rem' }}>
+                      {arrivedCount} <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>({totalParticipants > 0 ? Math.round((arrivedCount/totalParticipants)*100) : 0}%)</span>
+                    </strong>
+                  </div>
+                  <div className="glass-panel" style={{ padding: '1.25rem', textAlign: 'left', borderLeft: '4px solid #fbbf24', background: 'rgba(255,255,255,0.01)', borderRadius: '12px' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Classroom Unverified</span>
+                    <strong style={{ fontSize: '1.75rem', color: '#fbbf24', display: 'block', marginTop: '0.25rem' }}>{unverifiedCount}</strong>
+                  </div>
+                  <div className="glass-panel" style={{ 
+                    padding: '1.25rem', 
+                    textAlign: 'left', 
+                    borderLeft: `4px solid ${distressCount > 0 ? '#ef4444' : '#6b7280'}`, 
+                    background: distressCount > 0 ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255,255,255,0.01)', 
+                    borderRadius: '12px',
+                    animation: distressCount > 0 ? 'pulseGlow 1.5s infinite ease-in-out' : 'none'
+                  }}>
+                    <span style={{ color: distressCount > 0 ? '#ef4444' : 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>🚨 Distress Signals</span>
+                    <strong style={{ fontSize: '1.75rem', color: distressCount > 0 ? '#ef4444' : '#ffffff', display: 'block', marginTop: '0.25rem' }}>{distressCount} Active</strong>
                   </div>
                 </div>
               )}
             </div>
+
+            {/* Emergency Flashing Distress Alert Panel */}
+            {activeDrill && distressCount > 0 && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '2px solid rgba(239, 68, 68, 0.35)',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                textAlign: 'left',
+                animation: 'pulseGlow 1.5s infinite'
+              }}>
+                <h3 style={{ fontFamily: 'Outfit', color: '#f87171', fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  🚨 EMERGENCY DISTRESS ALERTS ACTIVE ({distressCount})
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                  Immediate marshaling triage required at the locations listed below:
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {distressList.map((log) => (
+                    <div key={log.userId} style={{
+                      background: 'rgba(15,23,42,0.9)',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                      borderRadius: '10px',
+                      padding: '1.25rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div>
+                        <strong style={{ color: '#ffffff', display: 'block', fontSize: '1.05rem' }}>{log.name} ({log.userId})</strong>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginTop: '0.15rem' }}>
+                          Role: {log.role} | Department: {log.department}
+                        </span>
+                        <span style={{ color: '#f87171', fontSize: '0.88rem', display: 'block', marginTop: '0.4rem', fontWeight: 600 }}>
+                          📍 Last Known Coordinates: {log.location}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleMarshalClear(log.userId)}
+                        className="btn btn-primary"
+                        style={{
+                          width: 'auto',
+                          padding: '0.5rem 1rem',
+                          fontSize: '0.8rem',
+                          background: 'linear-gradient(135deg, #10b981, #059669)',
+                          color: '#ffffff',
+                          border: 'none',
+                          boxShadow: 'none'
+                        }}
+                      >
+                        Mark Safe & Clear Alert
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Tabs Navigation */}
             <div style={{
@@ -676,7 +833,7 @@ export default function Dashboard({ user, token, onLogout }) {
               gap: '1rem',
               borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
               paddingBottom: '1.25rem',
-              marginBottom: '1rem'
+              marginBottom: '0.5rem'
             }}>
               <button
                 onClick={() => setActiveTab('occupancy')}
@@ -695,10 +852,77 @@ export default function Dashboard({ user, token, onLogout }) {
               >
                 🗺️ Evacuation Path Designer & Rerouting
               </button>
+              <button
+                onClick={() => {
+                  setActiveTab('reports');
+                  fetchDrillsList();
+                }}
+                className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ width: 'auto', padding: '0.6rem 1.5rem', fontSize: '0.85rem' }}
+              >
+                📋 Compliance Safety Reports
+              </button>
             </div>
 
-            {activeTab === 'occupancy' ? (
+            {activeTab === 'occupancy' && (
               <>
+                {/* Floor-by-Floor Clearance Checklists (Module 4 clearances) */}
+                {activeDrill && floorClearances.length > 0 && (
+                  <div className="glass-panel" style={{ padding: '2rem', textAlign: 'left' }}>
+                    <h3 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.25rem' }}>
+                      Floor-by-Floor Clearance Checklist
+                    </h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+                      {floorClearances.map(fc => {
+                        const isCleared = fc.remaining === 0 && fc.totalOccupants > 0;
+                        return (
+                          <div key={fc.floor} style={{
+                            background: 'rgba(255,255,255,0.01)',
+                            border: `1px solid ${isCleared ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.05)'}`,
+                            borderRadius: '12px',
+                            padding: '1.25rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.5rem'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <strong style={{ color: '#ffffff', fontSize: '0.95rem' }}>Floor {fc.floor}</strong>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                color: isCleared ? '#34d399' : '#f59e0b',
+                                background: isCleared ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                                padding: '0.15rem 0.4rem',
+                                borderRadius: '4px'
+                              }}>
+                                {isCleared ? 'CLEARED' : 'IN PROGRESS'}
+                              </span>
+                            </div>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                              Arrived: **{fc.evacuated}** of **{fc.totalOccupants}** baseline
+                            </span>
+                            <div style={{
+                              width: '100%',
+                              height: '6px',
+                              background: 'rgba(255,255,255,0.05)',
+                              borderRadius: '3px',
+                              overflow: 'hidden',
+                              marginTop: '0.25rem'
+                            }}>
+                              <div style={{
+                                width: `${fc.totalOccupants > 0 ? (fc.evacuated / fc.totalOccupants) * 100 : 0}%`,
+                                height: '100%',
+                                background: isCleared ? '#10b981' : '#f59e0b',
+                                transition: 'width 0.4s ease'
+                              }}></div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Panel 2: Live Room Headcounts & Triangulations Dashboard (Module 2) */}
                 {activeDrill && (
                   <div className="glass-panel" style={{ padding: '2.25rem', animation: 'fadeIn 0.6s ease-out' }}>
@@ -749,10 +973,65 @@ export default function Dashboard({ user, token, onLogout }) {
                   </div>
                 )}
 
-                {/* Panel 3: Location-Unverified Student Triage Roster (Module 2) */}
+                {/* Unaccounted Students Safety Roster (Module 4 missing triage) */}
+                {activeDrill && missingList.length > 0 && (
+                  <div className="glass-panel" style={{ padding: '2.25rem', animation: 'fadeIn 0.6s ease-out' }}>
+                    <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
+                      <h3 style={{ fontFamily: 'Outfit', color: '#ef4444', fontSize: '1.35rem', fontWeight: 700 }}>
+                        Unaccounted Students Safety Roster ({missingList.length})
+                      </h3>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                        These students are registered at classroom baselines but have not checked in at the assembly area safe zone.
+                      </p>
+                    </div>
+
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                            <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>ID Number</th>
+                            <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Full Name</th>
+                            <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Department</th>
+                            <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Classroom Origin</th>
+                            <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Safety Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {missingList.map((stu) => (
+                            <tr key={stu.userId} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem' }}>
+                                <code style={{ color: 'var(--accent-gold)' }}>{stu.userId}</code>
+                              </td>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', color: '#ffffff', fontWeight: 600 }}>{stu.name}</td>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{stu.department}</td>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: '#60a5fa' }}>{stu.originRoom}</td>
+                              <td style={{ padding: '0.75rem 1rem' }}>
+                                <button
+                                  onClick={() => handleMarshalClear(stu.userId)}
+                                  className="btn btn-primary"
+                                  style={{
+                                    width: 'auto',
+                                    padding: '0.35rem 0.75rem',
+                                    fontSize: '0.75rem',
+                                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                                    boxShadow: 'none'
+                                  }}
+                                >
+                                  Marshal Clear
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Panel 3: Location-Unverified Student Triage Roster (Module 2 unverified scans) */}
                 {activeDrill && unverifiedList.length > 0 && (
                   <div className="glass-panel" style={{ padding: '2.25rem', animation: 'fadeIn 0.6s ease-out' }}>
-                    <h3 style={{ fontFamily: 'Outfit', color: '#ef4444', fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                    <h3 style={{ fontFamily: 'Outfit', color: '#fbbf24', fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.25rem' }}>
                       Location-Unverified Student Triage Roster
                     </h3>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
@@ -921,7 +1200,9 @@ export default function Dashboard({ user, token, onLogout }) {
                   </div>
                 )}
               </>
-            ) : (
+            )}
+
+            {activeTab === 'navigation' && (
               /* Evacuation Path Designer Tab Component */
               <div className="glass-panel" style={{ padding: '2.5rem', animation: 'fadeIn 0.5s ease-out' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2.5rem' }}>
@@ -1227,7 +1508,207 @@ export default function Dashboard({ user, token, onLogout }) {
                 </div>
               </div>
             )}
-            
+
+            {activeTab === 'reports' && (
+              /* Historical Drill Safety Compliance Reports Hub component */
+              <div className="glass-panel" style={{ padding: '2.5rem', animation: 'fadeIn 0.5s ease-out', textAlign: 'left' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2.5rem' }}>
+                  
+                  {/* Left History List Panel */}
+                  <div>
+                    <h4 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.25rem', marginBottom: '0.5rem' }}>
+                      Historical Safety Reviews
+                    </h4>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>
+                      Select a completed earthquake drill session to inspect analytics safety logs.
+                    </p>
+                    
+                    <button
+                      onClick={fetchDrillsList}
+                      className="btn btn-secondary"
+                      style={{ width: '100%', fontSize: '0.8rem', marginBottom: '1.5rem', border: '1px dashed rgba(255,255,255,0.2)' }}
+                    >
+                      🔄 Sync Completed Drills
+                    </button>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '350px', overflowY: 'auto' }}>
+                      {drillsList.map((dr) => (
+                        <button
+                          key={dr.id}
+                          onClick={() => {
+                            setSelectedReportId(dr.id);
+                            loadReportDetails(dr.id);
+                          }}
+                          className={`btn ${selectedReportId === dr.id ? 'btn-primary' : 'btn-secondary'}`}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                            padding: '0.85rem 1.25rem',
+                            borderRadius: '10px',
+                            textAlign: 'left',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <strong style={{ color: '#ffffff', fontSize: '0.9rem' }}>{dr.name}</strong>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                            Status: <span style={{ color: dr.status === 'concluded' ? '#10b981' : '#f59e0b', fontWeight: 700 }}>{dr.status.toUpperCase()}</span> | Code: DR-{dr.id}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Right Compliance Review Document Details */}
+                  <div>
+                    {loadingReport && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid rgba(255,255,255,0.05)', borderTopColor: 'var(--accent-gold)', animation: 'pulseGlow 1s infinite linear' }} />
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Compiling safety parameters...</span>
+                      </div>
+                    )}
+
+                    {!loadingReport && reportData && (
+                      <div id="safety-compliance-document" style={{
+                        background: 'rgba(15, 23, 42, 0.45)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '16px',
+                        padding: '2rem',
+                        boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
+                        animation: 'fadeIn 0.4s ease-out'
+                      }}>
+                        {/* Report Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
+                          <div>
+                            <h4 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.35rem', fontWeight: 700, margin: 0 }}>
+                              {reportData.name}
+                            </h4>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                              Institutional Earthquake Safety Clearance • Report ID: #{reportData.drillId}
+                            </span>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{
+                              fontSize: '0.82rem',
+                              fontWeight: 800,
+                              color: reportData.complianceAssessment.drillGrade === 'EXCELLENT' ? '#10b981' : reportData.complianceAssessment.drillGrade === 'SATISFACTORY' ? '#60a5fa' : '#f87171',
+                              background: reportData.complianceAssessment.drillGrade === 'EXCELLENT' ? 'rgba(16,185,129,0.1)' : 'rgba(96,165,250,0.1)',
+                              padding: '0.35rem 0.85rem',
+                              borderRadius: '8px',
+                              border: `1px solid ${reportData.complianceAssessment.drillGrade === 'EXCELLENT' ? 'rgba(16,185,129,0.2)' : 'rgba(96,165,250,0.2)'}`
+                            }}>{reportData.complianceAssessment.drillGrade} GRADE</span>
+                          </div>
+                        </div>
+
+                        {/* Summary Metrics */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                          <div style={{ background: 'rgba(255,255,255,0.01)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>Total Registered</span>
+                            <strong style={{ fontSize: '1.35rem', color: '#ffffff', marginTop: '0.2rem', display: 'block' }}>{reportData.totalParticipants}</strong>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.01)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>Evacuation Rate</span>
+                            <strong style={{ fontSize: '1.35rem', color: '#10b981', marginTop: '0.2rem', display: 'block' }}>{reportData.evacuationRate}%</strong>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.01)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>Total Clear Time</span>
+                            <strong style={{ fontSize: '1.35rem', color: '#60a5fa', marginTop: '0.2rem', display: 'block' }}>{reportData.clearTime}</strong>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.01)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>Unaccounted</span>
+                            <strong style={{ fontSize: '1.35rem', color: reportData.missingCount > 0 ? '#ef4444' : '#10b981', marginTop: '0.2rem', display: 'block' }}>{reportData.missingCount}</strong>
+                          </div>
+                        </div>
+
+                        {/* Floor clearance times */}
+                        <div style={{ marginBottom: '1.5rem' }}>
+                          <h5 style={{ color: '#ffffff', fontSize: '0.98rem', marginBottom: '0.6rem', fontFamily: 'Outfit' }}>Floor-by-Floor Clearance Analytics</h5>
+                          <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                              <thead>
+                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>
+                                  <th style={{ padding: '0.6rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Floor level</th>
+                                  <th style={{ padding: '0.6rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Baseline Roster</th>
+                                  <th style={{ padding: '0.6rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Evacuated Safely</th>
+                                  <th style={{ padding: '0.6rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Remaining</th>
+                                  <th style={{ padding: '0.6rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Egress Duration</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {reportData.floorClearance.map(fc => (
+                                  <tr key={fc.floor} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                    <td style={{ padding: '0.6rem 0.5rem', color: '#ffffff', fontWeight: 600 }}>Floor {fc.floor}</td>
+                                    <td style={{ padding: '0.6rem 0.5rem' }}>{fc.totalOccupants} occupants</td>
+                                    <td style={{ padding: '0.6rem 0.5rem', color: '#10b981', fontWeight: 600 }}>{fc.evacuated}</td>
+                                    <td style={{ padding: '0.6rem 0.5rem', color: fc.remaining > 0 ? '#ef4444' : 'var(--text-muted)' }}>{fc.remaining}</td>
+                                    <td style={{ padding: '0.6rem 0.5rem', color: '#60a5fa', fontWeight: 600 }}>{fc.clearTime}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Recommendations */}
+                        <div style={{
+                          background: 'rgba(251, 191, 36, 0.02)',
+                          padding: '1.25rem',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(251, 191, 36, 0.12)',
+                          marginBottom: '1.5rem'
+                        }}>
+                          <h5 style={{ color: 'var(--accent-gold)', fontSize: '0.92rem', marginBottom: '0.5rem', fontWeight: 700, fontFamily: 'Outfit' }}>
+                            Compliance Recommendations List
+                          </h5>
+                          <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                            {reportData.complianceAssessment.recommendations.map((rec, i) => (
+                              <li key={i}>{rec}</li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Export Buttons */}
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1.25rem' }}>
+                          <a
+                            href={`http://127.0.0.1:5000/api/reports/export/csv/${reportData.drillId}`}
+                            className="btn btn-secondary"
+                            style={{ width: 'auto', padding: '0.6rem 1.25rem', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                          >
+                            📥 Download Data Matrix (CSV)
+                          </a>
+                          <button
+                            onClick={() => window.print()}
+                            className="btn btn-primary"
+                            style={{ width: 'auto', padding: '0.6rem 1.25rem', fontSize: '0.82rem' }}
+                          >
+                            🖨️ Print Safety Certificate (PDF)
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {!reportData && !loadingReport && (
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '350px',
+                        border: '1px dashed var(--border-glass)',
+                        borderRadius: '16px',
+                        background: 'rgba(255,255,255,0.01)',
+                        color: 'var(--text-muted)'
+                      }}>
+                        <span style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📋</span>
+                        <strong style={{ color: '#ffffff' }}>No Compliance Report Selected</strong>
+                        <p style={{ fontSize: '0.82rem', marginTop: '0.25rem' }}>Select a finished drill session on the left to compile safety recommendations and clear certificates.</p>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

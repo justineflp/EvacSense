@@ -30,3 +30,7 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+
+# Java Maven build outputs
+target/
+**/target/

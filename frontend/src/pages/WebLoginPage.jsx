@@ -52,13 +52,13 @@ export default function WebLoginPage({ onLoginSuccess, navigate }) {
     setError('');
     setView('login');
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/auth/google-sso', {
+      const response = await fetch('http://127.0.0.1:5000/api/auth/microsoft-sso', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
           name,
-          googleToken: 'VALID_SIMULATED_SSO_TOKEN_' + Date.now()
+          microsoftToken: 'VALID_SIMULATED_SSO_TOKEN_' + Date.now()
         })
       });
       const data = await response.json();
@@ -66,7 +66,7 @@ export default function WebLoginPage({ onLoginSuccess, navigate }) {
       if (response.ok && data.status === 'success') {
         onLoginSuccess(data.session.token, data.user);
       } else {
-        setError(data.message || data.errors?.[0] || 'Google SSO failed.');
+        setError(data.message || data.errors?.[0] || 'Microsoft SSO failed.');
       }
     } catch (err) {
       setError('Connection to EvacSense authorization server failed.');
@@ -193,9 +193,19 @@ export default function WebLoginPage({ onLoginSuccess, navigate }) {
               className="btn btn-secondary btn-sso"
               onClick={() => setView('sso_select')}
               disabled={loading}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', margin: '0 0 1rem 0' }}
+              style={{ 
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: '0.5rem', 
+                margin: '0 0 1rem 0',
+                background: 'rgba(0, 120, 215, 0.08)',
+                border: '1px solid rgba(0, 120, 215, 0.35)',
+                color: '#60a5fa'
+              }}
             >
-              Google Workspace SSO
+              🔵 Sign in with Microsoft Outlook
             </button>
 
             <button 
@@ -352,8 +362,8 @@ export default function WebLoginPage({ onLoginSuccess, navigate }) {
         {/* 3. SSO Simulated Profile Selector View */}
         {view === 'sso_select' && (
           <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-            <h3 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.25rem', marginBottom: '0.25rem' }}>Simulated Google SSO Portal</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Select a mock institutional profile to assert identity:</p>
+            <h3 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.25rem', marginBottom: '0.25rem' }}>Microsoft Outlook SSO Portal</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Select a mock Outlook institutional account:</p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '260px', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1.5rem' }}>
               {ssoAccounts.map((acc, index) => (

@@ -44,6 +44,7 @@ class DashboardActivity : AppCompatActivity() {
         val actionText: TextView = findViewById(R.id.actionText)
         val logoutButton: Button = findViewById(R.id.logoutButton)
         val presenceButton: Button = findViewById(R.id.presenceButton)
+        val checkInButton: Button = findViewById(R.id.checkInButton)
         val navigationButton: Button = findViewById(R.id.navigationButton)
 
         // Bind data
@@ -59,12 +60,8 @@ class DashboardActivity : AppCompatActivity() {
             else -> "Mobile authentication complete. Standard navigation access allowed."
         }
 
-        // Initialize Retrofit Client
-        val retrofit = Retrofit.Builder()
-            .baseUrl(AuthService.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        authService = retrofit.create(AuthService::class.java)
+        // Initialize dynamic API Service
+        authService = ApiClient.getService(this)
 
         // For Student role, automatically activate active drill polling detector
         if (role == "Student") {
@@ -73,6 +70,10 @@ class DashboardActivity : AppCompatActivity() {
 
         presenceButton.setOnClickListener {
             startActivity(Intent(this, PresenceActivity::class.java))
+        }
+
+        checkInButton.setOnClickListener {
+            startActivity(Intent(this, CheckInActivity::class.java))
         }
 
         navigationButton.setOnClickListener {

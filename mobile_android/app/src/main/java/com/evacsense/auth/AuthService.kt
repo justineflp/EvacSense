@@ -54,6 +54,34 @@ interface AuthService {
         @Header("Authorization") bearerToken: String,
         @retrofit2.http.Query("origin") originRoomId: String
     ): Call<RouteResponse>
+
+    // Module 4: Evacuation Area Attendance and Biometrics
+    @POST("api/auth/microsoft-sso")
+    fun microsoftSSO(@Body request: MicrosoftSSORequest): Call<AuthResponse>
+
+    @POST("api/checkin/detect")
+    fun detectArrival(
+        @Header("Authorization") bearerToken: String,
+        @Body request: DetectArrivalRequest
+    ): Call<DetectArrivalResponse>
+
+    @POST("api/checkin/face")
+    fun submitFaceCheckIn(
+        @Header("Authorization") bearerToken: String,
+        @Body request: FaceCheckInRequest
+    ): Call<CheckInResponse>
+
+    @POST("api/checkin/peer")
+    fun submitPeerCheckIn(
+        @Header("Authorization") bearerToken: String,
+        @Body request: PeerCheckInRequest
+    ): Call<CheckInResponse>
+
+    @POST("api/checkin/distress")
+    fun submitDistressAlert(
+        @Header("Authorization") bearerToken: String,
+        @Body request: DistressRequest
+    ): Call<DistressResponse>
 }
 
 // Request Data Clump DTOs
@@ -66,6 +94,12 @@ data class GoogleSSORequest(
     val email: String,
     val name: String,
     val googleToken: String
+)
+
+data class MicrosoftSSORequest(
+    val email: String,
+    val name: String,
+    val microsoftToken: String
 )
 
 data class RecoveryRequest(
@@ -156,4 +190,58 @@ data class InstructionStep(
     val fromNode: String,
     val toNode: String,
     val text: String
+)
+
+// Module 4 Attendance & Distress DTOs
+data class DetectArrivalRequest(
+    val studentId: String
+)
+
+data class DetectArrivalResponse(
+    val status: String,
+    val action: String,
+    val student: UserDetails,
+    val message: String,
+    val errors: List<String>
+)
+
+data class UserDetails(
+    val id: String,
+    val name: String,
+    val department: String
+)
+
+data class FaceCheckInRequest(
+    val studentId: String,
+    val photo: String
+)
+
+data class PeerCheckInRequest(
+    val classmateId: String,
+    val photo: String
+)
+
+data class CheckInResponse(
+    val status: String,
+    val attendance: AttendanceDetails?,
+    val faceConfidence: Double?,
+    val attemptsRemaining: Int?,
+    val message: String?
+)
+
+data class AttendanceDetails(
+    val id: Int,
+    val status: String,
+    val arrivalTime: String
+)
+
+data class DistressRequest(
+    val studentId: String,
+    val location: String,
+    val timestamp: String
+)
+
+data class DistressResponse(
+    val status: String,
+    val message: String
 )
