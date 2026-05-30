@@ -19,8 +19,8 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var emailInput: EditText
     private lateinit var passwordInput: EditText
+    private lateinit var passwordToggle: android.widget.ImageView
     private lateinit var loginButton: Button
-    private lateinit var microsoftSsoButton: Button
     private lateinit var recoveryButton: TextView
     private lateinit var errorText: TextView
     private lateinit var loadingProgress: ProgressBar
@@ -29,6 +29,9 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var configServerUrlButton: TextView
 
     private lateinit var authService: AuthService
+    private var networkDiscoveryManager: NetworkDiscoveryManager? = null
+    
+    private var isPasswordVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,26 +40,56 @@ class LoginActivity : AppCompatActivity() {
         // Initialize UI Elements
         emailInput = findViewById(R.id.emailInput)
         passwordInput = findViewById(R.id.passwordInput)
+        passwordToggle = findViewById(R.id.passwordToggle)
         loginButton = findViewById(R.id.loginButton)
-        microsoftSsoButton = findViewById(R.id.microsoftSsoButton)
         recoveryButton = findViewById(R.id.recoveryButton)
         errorText = findViewById(R.id.errorText)
         loadingProgress = findViewById(R.id.loadingProgress)
         goToRegisterButton = findViewById(R.id.goToRegisterButton)
         configServerUrlButton = findViewById(R.id.configServerUrlButton)
 
+        passwordToggle.setOnClickListener {
+            isPasswordVisible = !isPasswordVisible
+            if (isPasswordVisible) {
+                passwordInput.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                passwordToggle.setImageResource(android.R.drawable.ic_menu_close_clear_cancel) // simple icon for hide
+            } else {
+                passwordInput.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                passwordToggle.setImageResource(android.R.drawable.ic_menu_view)
+            }
+            passwordInput.setSelection(passwordInput.text.length)
+        }
+
         // Initialize dynamic API Service
         authService = ApiClient.getService(this)
 
-        // Update server URL configuration display text
-        updateServerUrlButtonText()
+        // Start auto-discovery for local backend IP
+        configServerUrlButton.text = "📡 Scanning for local server...\n(Ensure backend is running)"
+        networkDiscoveryManager = NetworkDiscoveryManager(
+            context = this,
+            onServiceFound = { serverUrl ->
+                runOnUiThread {
+                    val sharedPref = getSharedPreferences("evacsense_prefs", Context.MODE_PRIVATE)
+                    sharedPref.edit().putString("server_url", serverUrl).apply()
+                    ApiClient.reset()
+                    authService = ApiClient.getService(this)
+                    configServerUrlButton.text = "✅ Auto-connected to: $serverUrl\n(Tap to configure manually)"
+                    Toast.makeText(this, "Local backend auto-discovered!", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onServiceLost = {
+                runOnUiThread {
+                    configServerUrlButton.text = "⚠️ Connection to local server lost\n(Tap to configure manually)"
+                }
+            }
+        )
+        networkDiscoveryManager?.startDiscovery()
 
         // Check if token exists in SharedPreferences for session auto-login
         checkExistingSession()
 
         // Set Click Listeners
         loginButton.setOnClickListener { handleLogin() }
-        microsoftSsoButton.setOnClickListener { handleMicrosoftSSO() }
         recoveryButton.setOnClickListener { handleAccountRecovery() }
 
         // Both goToRegisterButton and brandTitle click open the registration screen
@@ -142,43 +175,12 @@ class LoginActivity : AppCompatActivity() {
 
             override fun onFailure(call: Call<AuthResponse>, t: Throwable) {
                 showLoading(false)
-                showError("Cannot connect to EvacSense API.\nIf on a physical device, tap 'Configure API Server URL' at the bottom to set your computer's local IP.")
+                showError("Cannot connect to EvacSense API.\nError: ${t.message}\nTap 'Configure API Server URL' at the bottom to verify the IP.")
             }
         })
     }
 
-    private fun handleMicrosoftSSO() {
-        errorText.visibility = View.GONE
-        // For simulation purposes, we trigger Microsoft SSO with student account USR-001
-        showLoading(true)
-        val request = MicrosoftSSORequest(
-            email = "m.santos@student.cit.edu",
-            name = "Maria Santos",
-            microsoftToken = "SIMULATED_SSO_MICROSOFT_TOKEN_12345"
-        )
 
-        authService.microsoftSSO(request).enqueue(object : Callback<AuthResponse> {
-            override fun onResponse(call: Call<AuthResponse>, response: Response<AuthResponse>) {
-                showLoading(false)
-                val body = response.body()
-                if (response.isSuccessful && body?.status == "success") {
-                    val token = body.session?.token
-                    val user = body.user
-                    if (token != null && user != null) {
-                        saveSession(token, user)
-                        navigateToDashboard(user)
-                    }
-                } else {
-                    showError(body?.message ?: "Microsoft SSO assertion failed.")
-                }
-            }
-
-            override fun onFailure(call: Call<AuthResponse>, t: Throwable) {
-                showLoading(false)
-                showError("Microsoft SSO connection failed.")
-            }
-        })
-    }
 
     private fun handleAccountRecovery() {
         val email = emailInput.text.toString().trim()
@@ -241,7 +243,6 @@ class LoginActivity : AppCompatActivity() {
     private fun showLoading(isLoading: Boolean) {
         loadingProgress.visibility = if (isLoading) View.VISIBLE else View.GONE
         loginButton.isEnabled = !isLoading
-        microsoftSsoButton.isEnabled = !isLoading
     }
 
     private fun updateServerUrlButtonText() {
@@ -280,5 +281,10 @@ class LoginActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
             .show()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        networkDiscoveryManager?.stopDiscovery()
     }
 }

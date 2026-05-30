@@ -716,27 +716,29 @@ export default function Dashboard({ user, token, onLogout }) {
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Trigger live drill events and evaluate classroom baseline presence tracking</p>
                 </div>
                 
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  {!activeDrill ? (
-                    <button 
-                      onClick={handleStartDrill} 
-                      className="btn btn-primary" 
-                      style={{ width: 'auto', padding: '0.6rem 1.25rem', fontSize: '0.9rem' }}
-                      disabled={loadingDrill}
-                    >
-                      🚀 Initiate Earthquake Drill Run
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={handleConcludeDrill} 
-                      className="btn btn-primary" 
-                      style={{ width: 'auto', padding: '0.6rem 1.25rem', fontSize: '0.9rem', background: 'linear-gradient(135deg, #ef4444, #b91c1c)', color: '#ffffff', boxShadow: 'none' }}
-                      disabled={loadingDrill}
-                    >
-                      🛑 Conclude Active Drill Run
-                    </button>
-                  )}
-                </div>
+                {user.role === 'Drill Coordinator' && (
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    {!activeDrill ? (
+                      <button 
+                        onClick={handleStartDrill} 
+                        className="btn btn-primary" 
+                        style={{ width: 'auto', padding: '0.6rem 1.25rem', fontSize: '0.9rem' }}
+                        disabled={loadingDrill}
+                      >
+                        🚀 Initiate Earthquake Drill Run
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handleConcludeDrill} 
+                        className="btn btn-primary" 
+                        style={{ width: 'auto', padding: '0.6rem 1.25rem', fontSize: '0.9rem', background: 'linear-gradient(135deg, #ef4444, #b91c1c)', color: '#ffffff', boxShadow: 'none' }}
+                        disabled={loadingDrill}
+                      >
+                        🛑 Conclude Active Drill Run
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Status Ring Cockpit Metric Widgets */}
@@ -848,26 +850,30 @@ export default function Dashboard({ user, token, onLogout }) {
               >
                 📊 Drill Attendance & Occupancy
               </button>
-              <button
-                onClick={() => {
-                  setActiveTab('navigation');
-                  fetchGraph();
-                }}
-                className={`btn ${activeTab === 'navigation' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ width: 'auto', padding: '0.6rem 1.5rem', fontSize: '0.85rem' }}
-              >
-                🗺️ Evacuation Path Designer & Rerouting
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('reports');
-                  fetchDrillsList();
-                }}
-                className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ width: 'auto', padding: '0.6rem 1.5rem', fontSize: '0.85rem' }}
-              >
-                📋 Compliance Safety Reports
-              </button>
+              {user.role === 'Drill Coordinator' && (
+                <>
+                  <button
+                    onClick={() => {
+                      setActiveTab('navigation');
+                      fetchGraph();
+                    }}
+                    className={`btn ${activeTab === 'navigation' ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ width: 'auto', padding: '0.6rem 1.5rem', fontSize: '0.85rem' }}
+                  >
+                    🗺️ Evacuation Path Designer & Rerouting
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab('reports');
+                      fetchDrillsList();
+                    }}
+                    className={`btn ${activeTab === 'reports' ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ width: 'auto', padding: '0.6rem 1.5rem', fontSize: '0.85rem' }}
+                  >
+                    📋 Compliance Safety Reports
+                  </button>
+                </>
+              )}
             </div>
 
             {activeTab === 'occupancy' && (

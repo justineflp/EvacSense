@@ -13,16 +13,8 @@ export default function WebLoginPage({ onLoginSuccess, navigate }) {
   const [regEmail, setRegEmail] = useState('');
   const [regId, setRegId] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
 
-  // Default seeded Google accounts for quick SSO testing
-  const ssoAccounts = [
-    { name: "Maria Santos", email: "m.santos@student.cit.edu" },
-    { name: "Dr. Jose Reyes", email: "j.reyes@cit.edu" },
-    { name: "Engr. Ana Cruz", email: "a.cruz@cit.edu" },
-    { name: "Mr. Carlo Lim", email: "c.lim@cit.edu" },
-    { name: "Juan dela Cruz", email: "j.delacruz@student.cit.edu" },
-    { name: "External Account", email: "guest@gmail.com" }
-  ];
 
   const handlePasswordLogin = async (email, password) => {
     setLoading(true);
@@ -47,33 +39,7 @@ export default function WebLoginPage({ onLoginSuccess, navigate }) {
     }
   };
 
-  const handleSSOLogin = async (email, name) => {
-    setLoading(true);
-    setError('');
-    setView('login');
-    try {
-      const response = await fetch('http://127.0.0.1:5000/api/auth/microsoft-sso', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          name,
-          microsoftToken: 'VALID_SIMULATED_SSO_TOKEN_' + Date.now()
-        })
-      });
-      const data = await response.json();
-      
-      if (response.ok && data.status === 'success') {
-        onLoginSuccess(data.session.token, data.user);
-      } else {
-        setError(data.message || data.errors?.[0] || 'Microsoft SSO failed.');
-      }
-    } catch (err) {
-      setError('Connection to EvacSense authorization server failed.');
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const handleRegistrationSubmit = async (e) => {
     e.preventDefault();
@@ -177,36 +143,7 @@ export default function WebLoginPage({ onLoginSuccess, navigate }) {
               errorMessage={error} 
             />
 
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              margin: '1.25rem 0',
-              color: 'var(--text-muted)'
-            }}>
-              <hr style={{ flex: 1, border: '0', borderTop: '1px solid var(--border-glass)' }} />
-              <span style={{ padding: '0 0.75rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>OR</span>
-              <hr style={{ flex: 1, border: '0', borderTop: '1px solid var(--border-glass)' }} />
-            </div>
 
-            <button 
-              type="button" 
-              className="btn btn-secondary btn-sso"
-              onClick={() => setView('sso_select')}
-              disabled={loading}
-              style={{ 
-                width: '100%', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                gap: '0.5rem', 
-                margin: '0 0 1rem 0',
-                background: 'rgba(0, 120, 215, 0.08)',
-                border: '1px solid rgba(0, 120, 215, 0.35)',
-                color: '#60a5fa'
-              }}
-            >
-              🔵 Sign in with Microsoft Outlook
-            </button>
 
             <button 
               type="button" 
@@ -326,15 +263,46 @@ export default function WebLoginPage({ onLoginSuccess, navigate }) {
 
               <div className="form-group">
                 <label className="form-label" htmlFor="reg-password">Password</label>
-                <input
-                  id="reg-password"
-                  type="password"
-                  className="form-input"
-                  placeholder="••••••••••••"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                  required
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    id="reg-password"
+                    type={showRegPassword ? "text" : "password"}
+                    className="form-input"
+                    placeholder="••••••••••••"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    required
+                    style={{ paddingRight: '40px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--text-muted)',
+                      fontSize: '1.2rem',
+                      padding: 0
+                    }}
+                  >
+                    {showRegPassword ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -359,43 +327,7 @@ export default function WebLoginPage({ onLoginSuccess, navigate }) {
           </div>
         )}
 
-        {/* 3. SSO Simulated Profile Selector View */}
-        {view === 'sso_select' && (
-          <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-            <h3 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.25rem', marginBottom: '0.25rem' }}>Microsoft Outlook SSO Portal</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Select a mock Outlook institutional account:</p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '260px', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1.5rem' }}>
-              {ssoAccounts.map((acc, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => handleSSOLogin(acc.email, acc.name)}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    padding: '0.75rem 1rem',
-                    textAlign: 'left'
-                  }}
-                >
-                  <strong style={{ color: '#ffffff', fontSize: '0.9rem' }}>{acc.name}</strong>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{acc.email}</span>
-                </button>
-              ))}
-            </div>
 
-            <button 
-              type="button" 
-              className="btn btn-secondary"
-              onClick={() => setView('login')}
-              style={{ width: '100%' }}
-            >
-              Cancel and Return
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

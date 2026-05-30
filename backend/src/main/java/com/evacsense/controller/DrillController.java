@@ -3,6 +3,7 @@ package com.evacsense.controller;
 import com.evacsense.model.*;
 import com.evacsense.repository.*;
 import com.evacsense.security.RequireRole;
+import com.evacsense.service.FaceRecognitionService;
 import com.evacsense.service.PositioningService;
 import com.evacsense.service.SessionLogger;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,6 +40,9 @@ public class DrillController {
 
     @Autowired
     private PositioningService positioningService;
+
+    @Autowired
+    private FaceRecognitionService faceRecognitionService;
 
     @Autowired
     private SessionLogger sessionLogger;
@@ -89,6 +93,9 @@ public class DrillController {
                     LocalDateTime.now()
             );
             drillSessionRepository.save(drill);
+            
+            // Reset all facial recognition lockouts for the new drill
+            faceRecognitionService.resetAllRetryAttempts();
 
             // Seed default baseline for classroom occupancy and attendance
             List<User> participants = userRepository.findByRoleIn(Arrays.asList("Student", "Teacher"));

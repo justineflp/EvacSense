@@ -15,6 +15,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import android.provider.MediaStore
+import android.graphics.Bitmap
+import android.util.Base64
+import androidx.activity.result.contract.ActivityResultContracts
+import java.io.ByteArrayOutputStream
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -28,6 +33,35 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var authService: AuthService
     private var currentDrillId: Int? = null
     private val LOCATION_PERMISSION_REQUEST_CODE = 888
+
+    private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val imageBitmap = result.data?.extras?.get("data") as? Bitmap
+            if (imageBitmap != null) {
+                val baos = ByteArrayOutputStream()
+                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos)
+                val base64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+                
+                val sharedPref = getSharedPreferences("evacsense_prefs", Context.MODE_PRIVATE)
+                val token = sharedPref.getString("auth_token", null)
+                if (token != null) {
+                    Toast.makeText(this, "Uploading photo...", Toast.LENGTH_SHORT).show()
+                    authService.registerStudentPhoto("Bearer $token", PhotoRegistrationRequest(base64)).enqueue(object : Callback<AuthResponse> {
+                        override fun onResponse(call: Call<AuthResponse>, response: Response<AuthResponse>) {
+                            if (response.isSuccessful && response.body()?.status == "success") {
+                                Toast.makeText(this@DashboardActivity, "✅ Facial biometric registered successfully!", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(this@DashboardActivity, "❌ Failed to register photo.", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        override fun onFailure(call: Call<AuthResponse>, t: Throwable) {
+                            Toast.makeText(this@DashboardActivity, "❌ Connection error.", Toast.LENGTH_LONG).show()
+                        }
+                    })
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +80,14 @@ class DashboardActivity : AppCompatActivity() {
         val presenceButton: Button = findViewById(R.id.presenceButton)
         val checkInButton: Button = findViewById(R.id.checkInButton)
         val navigationButton: Button = findViewById(R.id.navigationButton)
+        val registerPhotoButton: Button = findViewById(R.id.registerPhotoButton)
+
+        // Only show Register Photo button for Students
+        if (role == "Student") {
+            registerPhotoButton.visibility = android.view.View.VISIBLE
+        } else {
+            registerPhotoButton.visibility = android.view.View.GONE
+        }
 
         // Bind data
         titleText.text = "EvacSense Mobile Portal"
@@ -78,6 +120,14 @@ class DashboardActivity : AppCompatActivity() {
 
         navigationButton.setOnClickListener {
             startActivity(Intent(this, NavigationActivity::class.java))
+        }
+        
+        registerPhotoButton.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 999)
+            } else {
+                launchCamera()
+            }
         }
 
         logoutButton.setOnClickListener {
@@ -221,6 +271,21 @@ class DashboardActivity : AppCompatActivity() {
             } else {
                 launchNavigationScreen("ROOM-101")
             }
+        } else if (requestCode == 999) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                launchCamera()
+            } else {
+                Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun launchCamera() {
+        try {
+            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            takePhotoLauncher.launch(takePictureIntent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Camera not available: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 

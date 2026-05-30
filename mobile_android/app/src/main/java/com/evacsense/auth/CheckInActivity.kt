@@ -16,10 +16,15 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import android.provider.MediaStore
+import android.graphics.Bitmap
+import android.util.Base64
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.io.ByteArrayOutputStream
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -184,39 +189,61 @@ class CheckInActivity : AppCompatActivity() {
     }
 
     // --- 2FA Facial Biometrics Section ---
-    private fun handleFaceBiometricsCapture() {
-        simulatedCaptureCount++
-        faceStatusText.text = "Analyzing biometric coordinates... (Attempt $simulatedCaptureCount)"
-        captureFaceButton.isEnabled = false
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            captureFaceButton.isEnabled = true
-            
-            if (simulatedCaptureCount == 1) {
-                // First capture fail: low confidence
-                attemptsRemaining = 2
-                attemptsText.text = "Attempts Remaining: 2"
-                faceStatusText.text = "❌ Confidence too low: 62% (Ensure face is clear)"
-                faceStatusText.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_light))
-                Toast.makeText(this, "Biometric match failed. Confidence: 62%", Toast.LENGTH_SHORT).show()
-            } else if (simulatedCaptureCount == 2) {
-                // Second capture fail: low confidence
-                attemptsRemaining = 1
-                attemptsText.text = "Attempts Remaining: 1"
-                faceStatusText.text = "❌ Confidence too low: 75% (Hold camera still)"
-                faceStatusText.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_light))
-                Toast.makeText(this, "Biometric match failed. Confidence: 75%", Toast.LENGTH_SHORT).show()
+    private val takeFacePhotoLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val imageBitmap = result.data?.extras?.get("data") as? Bitmap
+            if (imageBitmap != null) {
+                faceStatusText.text = "Analyzing biometric coordinates..."
+                val baos = ByteArrayOutputStream()
+                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos)
+                val base64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+                
+                submitFaceCheckInNetwork(currentStudentId, base64)
             } else {
-                // Third attempt: success (89%, above 85% threshold)
-                attemptsRemaining = 3
-                attemptsText.text = "Attempts Remaining: 3"
-                faceStatusText.text = "✅ Match Success! Face biometric verified: 89%"
-                faceStatusText.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_light))
-
-                val photoSim = "SIMULATED_FACE_PHOTO_METADATA_BASE64_3"
-                submitFaceCheckInNetwork(currentStudentId, photoSim)
+                faceStatusText.text = "Capture failed."
+                captureFaceButton.isEnabled = true
             }
-        }, 1500)
+        } else {
+            captureFaceButton.isEnabled = true
+            faceStatusText.text = "Cancelled."
+        }
+    }
+
+    private val takePeerFacePhotoLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val imageBitmap = result.data?.extras?.get("data") as? Bitmap
+            if (imageBitmap != null) {
+                val peerId = peerStudentIdInput.text.toString().trim()
+                peerNameText.text = "Analyzing companion biometrics..."
+                peerNameText.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray))
+                val baos = ByteArrayOutputStream()
+                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos)
+                val base64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+                
+                submitPeerCheckInNetwork(peerId, base64)
+            } else {
+                peerNameText.text = "Capture failed."
+                peerNameText.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_light))
+                capturePeerFaceButton.isEnabled = true
+            }
+        } else {
+            capturePeerFaceButton.isEnabled = true
+            peerNameText.text = "Cancelled."
+        }
+    }
+
+    private fun handleFaceBiometricsCapture() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 999)
+        } else {
+            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            if (takePictureIntent.resolveActivity(packageManager) != null) {
+                captureFaceButton.isEnabled = false
+                takeFacePhotoLauncher.launch(takePictureIntent)
+            } else {
+                Toast.makeText(this, "Camera not available", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun submitFaceCheckInNetwork(studentId: String, photo: String) {
@@ -233,18 +260,50 @@ class CheckInActivity : AppCompatActivity() {
         authService.submitFaceCheckIn("Bearer $token", request).enqueue(object : Callback<CheckInResponse> {
             override fun onResponse(call: Call<CheckInResponse>, response: Response<CheckInResponse>) {
                 val body = response.body()
+                captureFaceButton.isEnabled = true
+                
                 if (response.isSuccessful && body?.status == "success") {
-                    Toast.makeText(this@CheckInActivity, "Check-in verified successfully on Supabase!", Toast.LENGTH_LONG).show()
+                    val conf = body.faceConfidence ?: 100.0
+                    val confInt = conf.toInt()
+                    faceStatusText.text = "✅ Match Success! Confidence: $confInt%"
+                    faceStatusText.setTextColor(ContextCompat.getColor(this@CheckInActivity, android.R.color.holo_green_light))
+                    captureFaceButton.isEnabled = false
+                    Toast.makeText(this@CheckInActivity, "Check-in verified successfully!", Toast.LENGTH_LONG).show()
                 } else {
-                    Toast.makeText(this@CheckInActivity, body?.message ?: "Verification failed.", Toast.LENGTH_LONG).show()
+                    var rem = 0
+                    var msg = "Verification failed."
+                    try {
+                        val errorString = response.errorBody()?.string()
+                        if (errorString != null) {
+                            val errorResponse = Gson().fromJson(errorString, CheckInResponse::class.java)
+                            rem = errorResponse.attemptsRemaining ?: 0
+                            msg = errorResponse.message ?: msg
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                    if (msg.contains("already been verified", ignoreCase = true)) {
+                        faceStatusText.text = "✅ You have already been verified."
+                        faceStatusText.setTextColor(ContextCompat.getColor(this@CheckInActivity, android.R.color.holo_green_light))
+                        captureFaceButton.isEnabled = false
+                    } else {
+                        faceStatusText.text = "❌ $msg (Attempts left: $rem)"
+                        faceStatusText.setTextColor(ContextCompat.getColor(this@CheckInActivity, android.R.color.holo_red_light))
+                        attemptsText.text = "Attempts Remaining: $rem"
+                    }
+                    Toast.makeText(this@CheckInActivity, msg, Toast.LENGTH_LONG).show()
                 }
             }
 
             override fun onFailure(call: Call<CheckInResponse>, t: Throwable) {
+                captureFaceButton.isEnabled = true
                 isOfflineMode = true
                 updateNetworkUI()
                 cacheOfflineCheckIn(studentId, photo, "face")
                 Toast.makeText(this@CheckInActivity, "Server offline. Check-in saved to local queue.", Toast.LENGTH_LONG).show()
+                faceStatusText.text = "Offline Mode: Photo Queued"
+                faceStatusText.setTextColor(ContextCompat.getColor(this@CheckInActivity, android.R.color.holo_orange_light))
             }
         })
     }
@@ -277,12 +336,14 @@ class CheckInActivity : AppCompatActivity() {
                 val body = response.body()
                 if (response.isSuccessful && body?.status == "success" && body.student != null) {
                     peerNameText.visibility = View.VISIBLE
-                    peerNameText.text = "Validated Companion: ${body.student.name}"
+                    peerNameText.text = "Validated Companion: ${body.student.id} - ${body.student.name}"
+                    peerNameText.setTextColor(ContextCompat.getColor(this@CheckInActivity, android.R.color.holo_green_dark))
                     capturePeerFaceButton.isEnabled = true
                 } else {
-                    peerNameText.visibility = View.GONE
+                    peerNameText.visibility = View.VISIBLE
+                    peerNameText.text = "ID Number Not Registered"
+                    peerNameText.setTextColor(ContextCompat.getColor(this@CheckInActivity, android.R.color.holo_red_light))
                     capturePeerFaceButton.isEnabled = false
-                    Toast.makeText(this@CheckInActivity, "Classmate ID not registered.", Toast.LENGTH_LONG).show()
                 }
             }
 
@@ -292,17 +353,29 @@ class CheckInActivity : AppCompatActivity() {
                 updateNetworkUI()
                 peerNameText.visibility = View.VISIBLE
                 peerNameText.text = "Offline: Verified peer ID $peerId"
+                peerNameText.setTextColor(ContextCompat.getColor(this@CheckInActivity, android.R.color.holo_orange_dark))
                 capturePeerFaceButton.isEnabled = true
             }
         })
     }
 
     private fun handlePeerCheckIn() {
-        val peerId = peerStudentIdInput.text.toString().trim()
-        val photoSim = "SIMULATED_PEER_FACE_PHOTO_METADATA_BASE64_92"
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 999)
+        } else {
+            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            if (takePictureIntent.resolveActivity(packageManager) != null) {
+                capturePeerFaceButton.isEnabled = false
+                takePeerFacePhotoLauncher.launch(takePictureIntent)
+            } else {
+                Toast.makeText(this, "Camera not available", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
+    private fun submitPeerCheckInNetwork(peerId: String, photoBase64: String) {
         if (!checkConnection()) {
-            cacheOfflineCheckIn(peerId, photoSim, "peer")
+            cacheOfflineCheckIn(peerId, photoBase64, "peer")
             Toast.makeText(this, "🟢 Peer Check-in cached locally in Queue!", Toast.LENGTH_LONG).show()
             capturePeerFaceButton.isEnabled = false
             peerStudentIdInput.setText("")
@@ -310,30 +383,33 @@ class CheckInActivity : AppCompatActivity() {
             return
         }
 
-        capturePeerFaceButton.isEnabled = false
-        val request = PeerCheckInRequest(peerId, photoSim)
+        val request = PeerCheckInRequest(peerId, photoBase64)
         val token = getSharedPreferences("evacsense_prefs", Context.MODE_PRIVATE).getString("auth_token", "") ?: ""
 
         authService.submitPeerCheckIn("Bearer $token", request).enqueue(object : Callback<CheckInResponse> {
             override fun onResponse(call: Call<CheckInResponse>, response: Response<CheckInResponse>) {
                 val body = response.body()
                 if (response.isSuccessful && body?.status == "success") {
-                    Toast.makeText(this@CheckInActivity, "Peer Check-in verified on Supabase!", Toast.LENGTH_LONG).show()
+                    val conf = body.faceConfidence ?: 100.0
+                    Toast.makeText(this@CheckInActivity, "Peer Check-in verified on Supabase! (Conf: $conf%)", Toast.LENGTH_LONG).show()
                     peerStudentIdInput.setText("")
-                    peerNameText.visibility = View.GONE
+                    peerNameText.text = "✅ Companion Checked In Successfully!"
+                    peerNameText.setTextColor(ContextCompat.getColor(this@CheckInActivity, android.R.color.holo_green_dark))
                 } else {
                     capturePeerFaceButton.isEnabled = true
-                    Toast.makeText(this@CheckInActivity, body?.message ?: "Peer check failed.", Toast.LENGTH_LONG).show()
+                    peerNameText.text = "❌ Peer check failed: ${body?.message}"
+                    peerNameText.setTextColor(ContextCompat.getColor(this@CheckInActivity, android.R.color.holo_red_light))
                 }
             }
 
             override fun onFailure(call: Call<CheckInResponse>, t: Throwable) {
                 isOfflineMode = true
                 updateNetworkUI()
-                cacheOfflineCheckIn(peerId, photoSim, "peer")
+                cacheOfflineCheckIn(peerId, photoBase64, "peer")
                 Toast.makeText(this@CheckInActivity, "Saved peer check-in to local queue.", Toast.LENGTH_LONG).show()
                 peerStudentIdInput.setText("")
-                peerNameText.visibility = View.GONE
+                peerNameText.text = "Offline Mode: Peer Photo Queued"
+                peerNameText.setTextColor(ContextCompat.getColor(this@CheckInActivity, android.R.color.holo_orange_dark))
             }
         })
     }

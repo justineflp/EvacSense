@@ -35,6 +35,12 @@ interface AuthService {
     @POST("api/auth/register/staff")
     fun registerStaff(@Body request: StaffRegisterRequest): Call<AuthResponse>
 
+    @POST("api/auth/register-photo")
+    fun registerStudentPhoto(
+        @Header("Authorization") bearerToken: String,
+        @Body request: PhotoRegistrationRequest
+    ): Call<AuthResponse>
+
     // Module 2: Classroom Presence Recording endpoints
     @POST("api/presence/scan")
     fun scanPresence(
@@ -121,6 +127,10 @@ data class StaffRegisterRequest(
     val password: String,
     val deviceId: String,
     val role: String
+)
+
+data class PhotoRegistrationRequest(
+    val photoBase64: String
 )
 
 data class ActiveDrillResponse(

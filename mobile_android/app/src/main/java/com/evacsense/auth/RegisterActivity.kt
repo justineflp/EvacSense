@@ -26,12 +26,14 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var idLabel: TextView
     private lateinit var idInput: EditText
     private lateinit var passwordInput: EditText
+    private lateinit var passwordToggle: android.widget.ImageView
     private lateinit var registerButton: Button
     private lateinit var backToLoginButton: Button
     private lateinit var regProgress: ProgressBar
 
     private lateinit var authService: AuthService
     private val roles = arrayOf("Student", "Teacher", "Drill Coordinator")
+    private var isPasswordVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,9 +46,22 @@ class RegisterActivity : AppCompatActivity() {
         idLabel = findViewById(R.id.idLabel)
         idInput = findViewById(R.id.idInput)
         passwordInput = findViewById(R.id.passwordInput)
+        passwordToggle = findViewById(R.id.passwordToggle)
         registerButton = findViewById(R.id.registerButton)
         backToLoginButton = findViewById(R.id.backToLoginButton)
         regProgress = findViewById(R.id.regProgress)
+
+        passwordToggle.setOnClickListener {
+            isPasswordVisible = !isPasswordVisible
+            if (isPasswordVisible) {
+                passwordInput.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                passwordToggle.setImageResource(android.R.drawable.ic_menu_close_clear_cancel) // simple icon for hide
+            } else {
+                passwordInput.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                passwordToggle.setImageResource(android.R.drawable.ic_menu_view)
+            }
+            passwordInput.setSelection(passwordInput.text.length)
+        }
 
         // Set up Spinner
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, roles)

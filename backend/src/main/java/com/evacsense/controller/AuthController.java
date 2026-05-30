@@ -625,4 +625,32 @@ public class AuthController {
 
         return ResponseEntity.ok(response);
     }
+
+    // 14. Register Student Photo (Facial Verification Baseline)
+    @RequireRole("Student")
+    @PostMapping("/auth/register-photo")
+    public ResponseEntity<Map<String, Object>> registerStudentPhoto(@RequestBody Map<String, String> body, HttpServletRequest request) {
+        String photoBase64 = body.get("photoBase64");
+        User student = (User) request.getAttribute("currentUser");
+        String ip = getClientIp(request);
+
+        if (photoBase64 == null || photoBase64.trim().isEmpty()) {
+            return buildErrorResponse(HttpStatus.BAD_REQUEST, "Photo data is missing.", 
+                    "You must provide a valid Base64 encoded image.");
+        }
+
+        student.setPhotoBase64(photoBase64);
+        userRepository.save(student);
+
+        sessionLogger.logEvent("photo_registration", student.getEmail(), ip, 
+                "Student " + student.getId() + " registered facial biometric photo.");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("action", "register_photo");
+        response.put("message", "Facial biometric registered successfully.");
+        response.put("errors", Collections.emptyList());
+
+        return ResponseEntity.ok(response);
+    }
 }

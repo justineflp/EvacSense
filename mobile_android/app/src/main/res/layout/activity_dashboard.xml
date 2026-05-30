@@ -89,6 +89,16 @@
         android:layout_marginBottom="16dp" />
 
     <Button
+        android:id="@+id/registerPhotoButton"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="📷 Register Student Photo"
+        android:backgroundTint="#8B5CF6"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <Button
         android:id="@+id/logoutButton"
         android:layout_width="match_parent"
         android:layout_height="50dp"

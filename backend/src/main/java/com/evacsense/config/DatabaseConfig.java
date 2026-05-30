@@ -14,8 +14,14 @@ import java.util.Map;
 
 @Configuration
 public class DatabaseConfig {
+    @org.springframework.beans.factory.annotation.Value("${supabase.db.url:}")
+    private String supabasePropertyUrl;
 
     private String getSupabaseUrl() {
+        if (supabasePropertyUrl != null && !supabasePropertyUrl.isEmpty()) {
+            return supabasePropertyUrl;
+        }
+        
         String supabaseUrl = System.getenv("SUPABASE_DB_URL");
         if (supabaseUrl != null && !supabaseUrl.isEmpty()) {
             return supabaseUrl;

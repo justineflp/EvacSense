@@ -122,12 +122,16 @@ public class AttendanceController {
 
         User student = studentOpt.get();
 
-        // Call face recognition service
-        FaceRecognitionService.FaceVerifyResult result = faceRecognitionService.verifyFace(studentId, photo);
-
         ClassroomAttendance attendance = classroomAttendanceRepository
                 .findByDrillIdAndUserId(activeDrill.get().getId(), studentId)
                 .orElseGet(() -> new ClassroomAttendance(activeDrill.get().getId(), studentId, "Absent"));
+
+        if (attendance.getStatus() != null && attendance.getStatus().startsWith("Present")) {
+            return buildErrorResponse(HttpStatus.BAD_REQUEST, "You have already been verified.", "Duplicate check-in");
+        }
+
+        // Call face recognition service
+        FaceRecognitionService.FaceVerifyResult result = faceRecognitionService.verifyFace(studentId, photo);
 
         if (result.success) {
             attendance.setStatus("Present");
@@ -199,11 +203,15 @@ public class AttendanceController {
 
         User classmate = classmateOpt.get();
 
-        FaceRecognitionService.FaceVerifyResult result = faceRecognitionService.verifyFace(classmateId, photo);
-
         ClassroomAttendance attendance = classroomAttendanceRepository
                 .findByDrillIdAndUserId(activeDrill.get().getId(), classmateId)
                 .orElseGet(() -> new ClassroomAttendance(activeDrill.get().getId(), classmateId, "Absent"));
+
+        if (attendance.getStatus() != null && attendance.getStatus().startsWith("Present")) {
+            return buildErrorResponse(HttpStatus.BAD_REQUEST, "This classmate has already been verified.", "Duplicate peer check-in");
+        }
+
+        FaceRecognitionService.FaceVerifyResult result = faceRecognitionService.verifyFace(classmateId, photo);
 
         if (result.success) {
             attendance.setStatus("Present (Peer-Assisted)");

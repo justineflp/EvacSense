@@ -25,6 +25,9 @@ public class User {
     @Column(nullable = false)
     private String role; // 'Student', 'Teacher', 'Drill Coordinator', 'System Admin'
 
+    @Column(name = "photoBase64", columnDefinition = "text")
+    private String photoBase64;
+
     private String department;
 
     @Column(name = "failedAttempts", nullable = false)
@@ -79,6 +82,9 @@ public class User {
 
     public Integer getFailedAttempts() { return failedAttempts; }
     public void setFailedAttempts(Integer failedAttempts) { this.failedAttempts = failedAttempts; }
+
+    public String getPhotoBase64() { return photoBase64; }
+    public void setPhotoBase64(String photoBase64) { this.photoBase64 = photoBase64; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

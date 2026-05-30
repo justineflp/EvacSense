@@ -81,17 +81,34 @@
                 android:textAllCaps="true"
                 android:layout_marginBottom="6dp" />
 
-            <EditText
-                android:id="@+id/passwordInput"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:hint="••••••••••••"
-                android:textColorHint="#64748B"
-                android:textColor="#FFFFFF"
-                android:inputType="textPassword"
-                android:background="#020617"
-                android:padding="10dp"
-                android:layout_marginBottom="20dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp">
+
+                <EditText
+                    android:id="@+id/passwordInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="••••••••••••"
+                    android:textColorHint="#64748B"
+                    android:textColor="#FFFFFF"
+                    android:inputType="textPassword"
+                    android:background="#020617"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="40dp" />
+
+                <ImageView
+                    android:id="@+id/passwordToggle"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:padding="12dp"
+                    android:src="@android:drawable/ic_menu_view"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"/>
+            </FrameLayout>
 
             <!-- Error Banner -->
             <TextView
@@ -124,27 +141,7 @@
                 android:visibility="gone"
                 android:indeterminateTint="#F59E0B" />
 
-            <!-- Divider -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="or continue with"
-                android:textColor="#64748B"
-                android:textSize="10sp"
-                android:gravity="center"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="10dp"
-                android:textAllCaps="true" />
 
-            <!-- Microsoft Button -->
-            <Button
-                android:id="@+id/microsoftSsoButton"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:text="Sign in with Microsoft"
-                android:backgroundTint="#00A4EF"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
 
         </LinearLayout>
 
