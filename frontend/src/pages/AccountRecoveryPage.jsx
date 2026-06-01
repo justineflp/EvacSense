@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { KeyIcon } from '../components/EvacSenseIcons';
 
 export default function AccountRecoveryPage({ navigate }) {
   const [email, setEmail] = useState('');
@@ -34,7 +35,7 @@ export default function AccountRecoveryPage({ navigate }) {
 
   return (
     <div className="container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="glass-panel" style={{
+      <div className="surface-card" style={{
         width: '100%',
         maxWidth: '460px',
         padding: '2.5rem',
@@ -46,25 +47,26 @@ export default function AccountRecoveryPage({ navigate }) {
             width: '60px',
             height: '60px',
             borderRadius: '16px',
-            background: 'rgba(251, 191, 36, 0.1)',
-            border: '1px solid rgba(251, 191, 36, 0.2)',
+            background: 'rgba(30, 136, 229, 0.1)',
+            border: '1px solid rgba(30, 136, 229, 0.18)',
             margin: '0 auto 1rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.5rem',
-            color: 'var(--accent-gold)'
-          }}>🔑</div>
+            color: 'var(--blue)'
+          }}>
+            <KeyIcon size={28} />
+          </div>
           <h1 className="brand-title" style={{ fontSize: '1.75rem' }}>Account Recovery</h1>
-          <p className="brand-subtitle">Reset Secure Credentials</p>
+          <p className="brand-subtitle" style={{ color: 'var(--text-secondary)' }}>Reset secure credentials</p>
         </div>
 
         {message ? (
           <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
             <div style={{
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.25)',
-              color: '#34d399',
+              background: 'rgba(24, 160, 88, 0.08)',
+              border: '1px solid rgba(24, 160, 88, 0.18)',
+              color: 'var(--green)',
               padding: '1rem',
               borderRadius: '12px',
               fontSize: '0.9rem',
@@ -86,11 +88,11 @@ export default function AccountRecoveryPage({ navigate }) {
           <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
             {error && (
               <div style={{
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                color: '#f87171',
+                background: 'rgba(217, 45, 32, 0.08)',
+                border: '1px solid rgba(217, 45, 32, 0.18)',
+                color: 'var(--red)',
                 padding: '0.75rem 1rem',
-                borderRadius: '10px',
+                borderRadius: '14px',
                 fontSize: '0.875rem',
                 marginBottom: '1rem'
               }}>
@@ -99,7 +101,7 @@ export default function AccountRecoveryPage({ navigate }) {
             )}
 
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-              Enter your registered **CIT institutional email address** below. If your account exists in our database, we will dispatch a simulated recovery credential link immediately.
+              Enter your registered CIT institutional email address below. If your account exists in our database, we will dispatch a recovery credential link immediately.
             </p>
 
             <div className="form-group">

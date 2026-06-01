@@ -59,16 +59,9 @@ export default function App() {
   if (initialLoading) {
     return (
       <div className="container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-        <div style={{
-          width: '50px',
-          height: '50px',
-          borderRadius: '50%',
-          border: '3px solid rgba(251, 191, 36, 0.1)',
-          borderTopColor: 'var(--accent-gold)',
-          animation: 'pulseGlow 1s infinite linear'
-        }}></div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontFamily: 'Outfit', letterSpacing: '0.05em' }}>
-          VERIFYING SECURE SESSION INTERFACE...
+        <div className="loader-ring"></div>
+        <p className="loading-copy" style={{ fontFamily: 'Outfit' }}>
+          Verifying secure session interface...
         </p>
       </div>
     );
