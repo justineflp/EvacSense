@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { User, Lock, Eye, EyeOff } from 'lucide-react';
 
-export default function LoginForm({ onSubmit, loading, errorMessage }) {
+export default function LoginForm({ onSubmit, loading, errorMessage, onNavigateRecovery, onCreateAccount }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [validationError, setValidationError] = useState('');
 
   const handleSubmit = (e) => {
@@ -11,13 +13,7 @@ export default function LoginForm({ onSubmit, loading, errorMessage }) {
     setValidationError('');
 
     if (!email || !password) {
-      setValidationError('Please enter both your institutional email and password.');
-      return;
-    }
-
-    // Strict CIT Domain verification
-    if (!email.endsWith('@cit.edu') && !email.endsWith('@student.cit.edu')) {
-      setValidationError('Only institutional accounts (@cit.edu or @student.cit.edu) are permitted.');
+      setValidationError('Please enter both your User ID / Email and password.');
       return;
     }
 
@@ -25,101 +21,150 @@ export default function LoginForm({ onSubmit, loading, errorMessage }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+    <form onSubmit={handleSubmit} style={{ width: '100%', textAlign: 'left' }}>
       {validationError && (
-        <div style={{
-          background: 'rgba(239, 68, 68, 0.12)',
-          border: '1px solid rgba(239, 68, 68, 0.25)',
-          color: '#f87171',
-          padding: '0.75rem 1rem',
-          borderRadius: '10px',
-          fontSize: '0.875rem',
-          marginBottom: '1rem',
-          textAlign: 'left'
-        }}>
-          <strong>Validation Error:</strong> {validationError}
+        <div className="alert alert-error">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <div><strong>Validation Error:</strong> {validationError}</div>
         </div>
       )}
 
       {errorMessage && (
-        <div style={{
-          background: 'rgba(239, 68, 68, 0.12)',
-          border: '1px solid rgba(239, 68, 68, 0.25)',
-          color: '#f87171',
-          padding: '0.75rem 1rem',
-          borderRadius: '10px',
-          fontSize: '0.875rem',
-          marginBottom: '1rem',
-          textAlign: 'left'
-        }}>
-          <strong>Auth Error:</strong> {errorMessage}
+        <div className="alert alert-error">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <div><strong>Auth Error:</strong> {errorMessage}</div>
         </div>
       )}
 
+      {/* User ID Field */}
       <div className="form-group">
-        <label className="form-label" htmlFor="email">Institutional Email</label>
+        <label className="form-label" htmlFor="email" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', textTransform: 'none', fontWeight: 600, fontSize: '0.9rem', color: '#334155' }}>
+          <User size={16} /> User ID
+        </label>
         <input
           id="email"
-          type="email"
+          type="text"
           className="form-input"
-          placeholder="username@student.cit.edu or @cit.edu"
+          placeholder="Enter your ID (e.g., 21-123456)"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
         />
       </div>
 
-      <div className="form-group">
-        <label className="form-label" htmlFor="password">Password</label>
+      {/* Password Field */}
+      <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+        <label className="form-label" htmlFor="password" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', textTransform: 'none', fontWeight: 600, fontSize: '0.9rem', color: '#334155' }}>
+          <Lock size={16} /> Password
+        </label>
         <div style={{ position: 'relative' }}>
           <input
             id="password"
             type={showPassword ? "text" : "password"}
             className="form-input"
-            placeholder="••••••••••••"
+            placeholder="Enter password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
-            style={{ paddingRight: '40px' }}
+            style={{ paddingRight: '75px' }}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
+            aria-label="Toggle password visibility"
             style={{
               position: 'absolute',
-              right: '10px',
+              right: '12px',
               top: '50%',
               transform: 'translateY(-50%)',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--text-muted)',
-              fontSize: '1.2rem',
-              padding: 0
+              color: '#64748b',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem'
             }}
           >
-            {showPassword ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-              </svg>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            )}
+            {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+            <span>{showPassword ? 'Hide' : 'Show'}</span>
           </button>
         </div>
       </div>
 
+      {/* Options Row: Remember Me & Forgot Password */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#475569', cursor: 'pointer', userSelect: 'none' }}>
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            style={{ accentColor: '#0f172a', cursor: 'pointer' }}
+          />
+          Remember Me
+        </label>
+
+        {onNavigateRecovery && (
+          <button
+            type="button"
+            onClick={onNavigateRecovery}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#0284c7',
+              fontWeight: '600',
+              cursor: 'pointer',
+              fontSize: '0.85rem'
+            }}
+          >
+            Forgot Password?
+          </button>
+        )}
+      </div>
+
+      {/* Main Log In Button */}
       <button
         type="submit"
         className="btn btn-primary"
         disabled={loading}
-        style={{ marginTop: '0.5rem' }}
+        style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          color: '#ffffff',
+          borderRadius: '10px',
+          padding: '0.85rem',
+          fontWeight: '700',
+          fontSize: '1rem',
+          width: '100%',
+          marginBottom: '0.85rem',
+          border: 'none',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.25)',
+          cursor: 'pointer'
+        }}
       >
         {loading ? 'Logging In...' : 'Log In'}
+      </button>
+
+      {/* Create Account Action Button */}
+      <button
+        type="button"
+        onClick={onCreateAccount}
+        disabled={loading}
+        style={{
+          width: '100%',
+          background: '#f1f5f9',
+          color: '#334155',
+          border: '1px solid #cbd5e1',
+          borderRadius: '10px',
+          padding: '0.75rem',
+          fontWeight: '600',
+          fontSize: '0.875rem',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease'
+        }}
+      >
+        Create Account
       </button>
     </form>
   );

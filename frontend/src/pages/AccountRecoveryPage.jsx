@@ -39,23 +39,22 @@ export default function AccountRecoveryPage({ navigate }) {
       <div className="glass-panel" style={{
         width: '100%',
         maxWidth: '460px',
-        padding: '2.5rem',
+        padding: '2.5rem 2rem',
         textAlign: 'center',
-        animation: 'fadeIn 0.6s ease-out'
+        animation: 'fadeIn 0.5s ease-out'
       }}>
-        <div style={{ marginBottom: '2rem' }}>
+        <div style={{ marginBottom: '1.75rem' }}>
           <div style={{
             width: '60px',
             height: '60px',
             borderRadius: '16px',
-            background: 'rgba(251, 191, 36, 0.1)',
-            border: '1px solid rgba(251, 191, 36, 0.2)',
-            margin: '0 auto 1rem',
+            background: 'var(--accent-gold-bg)',
+            border: '1px solid var(--accent-gold)',
+            margin: '0 auto 0.75rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.5rem',
-            color: 'var(--accent-gold)'
+            color: 'var(--accent-gold-hover)'
           }}><Key size={32} /></div>
           <h1 className="brand-title" style={{ fontSize: '1.75rem' }}>Account Recovery</h1>
           <p className="brand-subtitle">Reset Secure Credentials</p>
@@ -63,23 +62,18 @@ export default function AccountRecoveryPage({ navigate }) {
 
         {message ? (
           <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-            <div style={{
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.25)',
-              color: '#34d399',
-              padding: '1rem',
-              borderRadius: '12px',
-              fontSize: '0.9rem',
-              marginBottom: '2rem',
-              textAlign: 'left'
-            }}>
-              <strong>Dispatched Successfully!</strong><br />
-              {message}
+            <div className="alert alert-success">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <div>
+                <strong>Dispatched Successfully!</strong><br />
+                {message}
+              </div>
             </div>
             <button 
               type="button" 
               className="btn btn-primary"
               onClick={() => navigate('login')}
+              style={{ marginTop: '1rem' }}
             >
               Return to Login Portal
             </button>
@@ -87,21 +81,14 @@ export default function AccountRecoveryPage({ navigate }) {
         ) : (
           <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
             {error && (
-              <div style={{
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                color: '#f87171',
-                padding: '0.75rem 1rem',
-                borderRadius: '10px',
-                fontSize: '0.875rem',
-                marginBottom: '1rem'
-              }}>
-                {error}
+              <div className="alert alert-error">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: '2px' }}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <div>{error}</div>
               </div>
             )}
 
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-              Enter your registered **CIT institutional email address** below. If your account exists in our database, we will dispatch a simulated recovery credential link immediately.
+              Enter your registered <strong>institutional email address</strong> below. If your account exists in our database, we will dispatch a simulated recovery credential link immediately.
             </p>
 
             <div className="form-group">
@@ -110,7 +97,7 @@ export default function AccountRecoveryPage({ navigate }) {
                 id="recovery-email"
                 type="email"
                 className="form-input"
-                placeholder="e.g. m.santos@student.cit.edu"
+                placeholder="e.g. m.santos@evacsense.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
@@ -118,24 +105,24 @@ export default function AccountRecoveryPage({ navigate }) {
               />
             </div>
 
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={loading}
-              style={{ width: '100%', marginBottom: '1rem' }}
-            >
-              {loading ? 'Verifying Account...' : 'Dispatch Recovery Credentials'}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginTop: '1.5rem' }}>
+              <button 
+                type="submit" 
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? 'Verifying Account...' : 'Dispatch Recovery Credentials'}
+              </button>
 
-            <button 
-              type="button" 
-              className="btn btn-secondary"
-              onClick={() => navigate('login')}
-              disabled={loading}
-              style={{ width: '100%' }}
-            >
-              Back to Login
-            </button>
+              <button 
+                type="button" 
+                className="btn btn-secondary"
+                onClick={() => navigate('login')}
+                disabled={loading}
+              >
+                Back to Login
+              </button>
+            </div>
           </form>
         )}
       </div>

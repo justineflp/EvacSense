@@ -505,7 +505,7 @@ export default function Dashboard({ user, token, onLogout }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ name: 'CIT-U Annual Earthquake Drill ' + new Date().getFullYear() })
+        body: JSON.stringify({ name: 'Annual Emergency Earthquake Drill ' + new Date().getFullYear() })
       });
       const data = await response.json();
       if (response.ok && data.status === 'success') {
@@ -566,25 +566,45 @@ export default function Dashboard({ user, token, onLogout }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', padding: '3rem 2rem', position: 'relative' }}>
+    <div className="eds-dashboard-wrapper" style={{ padding: '2rem 3rem', overflowY: 'auto' }}>
       
       {/* Top Banner Navigation */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '2.5rem',
+        marginBottom: '2rem',
+        padding: '1.25rem 1.75rem',
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(12px)',
+        borderRadius: '16px',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
         animation: 'fadeIn 0.4s ease-out'
       }}>
-        <div>
-          <h1 className="brand-title" style={{ textAlign: 'left', fontSize: '2rem' }}>EvacSense Suite</h1>
-          <p className="brand-subtitle" style={{ textAlign: 'left' }}>Safety Administration Console</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{
+            width: '46px',
+            height: '46px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.15)'
+          }}>
+            <Shield size={28} color="#38bdf8" />
+          </div>
+          <div>
+            <h1 className="brand-title" style={{ textAlign: 'left', fontSize: '1.85rem', color: '#0f172a', margin: 0 }}>EvacSense Suite</h1>
+            <p className="brand-subtitle" style={{ textAlign: 'left', color: '#0284c7', margin: 0, fontSize: '0.85rem', fontWeight: 600 }}>Safety Administration Console</p>
+          </div>
         </div>
         
         <button 
           onClick={handleLogoutClick}
           className="btn btn-secondary" 
-          style={{ width: 'auto', padding: '0.6rem 1.2rem', fontSize: '0.875rem' }}
+          style={{ width: 'auto', padding: '0.6rem 1.2rem', fontSize: '0.875rem', background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1' }}
         >
           Logout Secure Session
         </button>
@@ -594,28 +614,20 @@ export default function Dashboard({ user, token, onLogout }) {
       {(actionMessage || actionError || rejectingId) && (
         <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem', animation: 'fadeIn 0.3s ease-out' }}>
           {actionMessage && (
-            <div style={{
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.25)',
-              color: '#34d399',
-              padding: '0.75rem 1rem',
-              borderRadius: '10px',
-              fontSize: '0.875rem'
-            }}>{actionMessage}</div>
+            <div className="alert alert-success">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              {actionMessage}
+            </div>
           )}
           {actionError && (
-            <div style={{
-              background: 'rgba(239, 68, 68, 0.12)',
-              border: '1px solid rgba(239, 68, 68, 0.25)',
-              color: '#f87171',
-              padding: '0.75rem 1rem',
-              borderRadius: '10px',
-              fontSize: '0.875rem'
-            }}>{actionError}</div>
+            <div className="alert alert-error">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              {actionError}
+            </div>
           )}
           {rejectingId && (
             <form onSubmit={handleRejectRequestSubmit} style={{ marginTop: '0.5rem', textAlign: 'left' }}>
-              <h4 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1rem', marginBottom: '0.5rem' }}>Provide Verification Rejection Reason</h4>
+              <h4 style={{ fontFamily: 'Outfit', color: 'var(--text-primary)', fontSize: '1rem', marginBottom: '0.5rem' }}>Provide Verification Rejection Reason</h4>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <input
                   type="text"
@@ -650,22 +662,22 @@ export default function Dashboard({ user, token, onLogout }) {
                 width: '80px',
                 height: '80px',
                 borderRadius: '24px',
-                background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(153, 27, 27, 0.2))',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--accent-gold-bg)',
+                border: '1px solid var(--accent-gold)',
                 margin: '0 auto 1.25rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '2rem',
-                color: 'var(--accent-gold)'
+                color: 'var(--accent-gold-hover)'
               }}><Shield size={24} /></div>
               
-              <h2 style={{ fontFamily: 'Outfit', fontSize: '1.5rem', fontWeight: 700, color: '#ffffff', marginBottom: '0.35rem' }}>{user.name}</h2>
+              <h2 style={{ fontFamily: 'Outfit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>{user.name}</h2>
               <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.75rem' }}>{user.email}</span>
               {renderBadge(user.role)}
             </div>
 
-            <hr style={{ border: '0', borderTop: '1px solid var(--border-glass)', margin: '1.5rem 0' }} />
+            <hr style={{ border: '0', borderTop: '1px solid var(--border-subtle)', margin: '1.5rem 0' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
               <div>
@@ -674,7 +686,7 @@ export default function Dashboard({ user, token, onLogout }) {
               </div>
               <div>
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', display: 'block', fontWeight: 600 }}>Authorization ID</span>
-                <code style={{ color: 'var(--accent-gold)', fontSize: '0.85rem', fontFamily: 'monospace' }}>{user.id}</code>
+                <code style={{ color: 'var(--accent-gold-hover)', fontSize: '0.85rem', fontFamily: 'monospace' }}>{user.id}</code>
               </div>
             </div>
           </div>
@@ -683,15 +695,15 @@ export default function Dashboard({ user, token, onLogout }) {
         {/* Right Column: Student/Teacher View */}
         {user.role !== 'System Admin' && user.role !== 'Drill Coordinator' && (
           <div className="glass-panel" style={{ padding: '2.5rem', animation: 'fadeIn 0.6s ease-out' }}>
-            <h3 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.25rem', marginBottom: '0.75rem' }}>Pre-Drill Presence Detection</h3>
+            <h3 style={{ fontFamily: 'Outfit', color: 'var(--text-primary)', fontSize: '1.25rem', marginBottom: '0.75rem' }}>Pre-Drill Presence Detection</h3>
             {activeDrill ? (
-              <div style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)', padding: '1.25rem', borderRadius: '12px', textAlign: 'left', animation: 'pulseGlow 2s infinite ease-in-out' }}>
-                <strong style={{ color: '#34d399', fontSize: '1.1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AlertTriangle size={20} /> DRILL SESSION IS ACTIVE!</strong>
+              <div style={{ background: 'var(--success-bg)', border: '1px solid var(--success-border)', padding: '1.25rem', borderRadius: '12px', textAlign: 'left', animation: 'pulseGlow 2s infinite ease-in-out' }}>
+                <strong style={{ color: 'var(--success-text)', fontSize: '1.1rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><AlertTriangle size={20} /> DRILL SESSION IS ACTIVE!</strong>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                  A drill coordinator has activated **{activeDrill.name}**. Students and teachers must execute pre-drill localization now!
+                  A drill coordinator has activated <strong>{activeDrill.name}</strong>. Students and teachers must execute pre-drill localization now!
                 </p>
-                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
-                  <p style={{ color: '#ffffff', fontSize: '0.85rem' }}><strong>Please trigger localization inside your mobile application:</strong></p>
+                <div style={{ background: '#ffffff', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                  <p style={{ color: 'var(--text-primary)', fontSize: '0.85rem' }}><strong>Please trigger localization inside your mobile application:</strong></p>
                   <ul style={{ paddingLeft: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.5rem' }}>
                     <li>Wifi RSSI signals will auto-triangulate your classroom positioning.</li>
                     <li>If automatic scanning fails, use the Manual Location Selection dropdown.</li>
@@ -699,9 +711,9 @@ export default function Dashboard({ user, token, onLogout }) {
                 </div>
               </div>
             ) : (
-              <div style={{ padding: '2rem', textAlign: 'center', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--border-glass)', borderRadius: '12px' }}>
+              <div style={{ padding: '2rem', textAlign: 'center', background: '#ffffff', border: '1px dashed var(--border-subtle)', borderRadius: '12px' }}>
                 <span style={{ fontSize: '1.75rem', display: 'flex', marginBottom: '0.5rem', justifyContent: 'center' }}><Moon size={28} /></span>
-                <strong style={{ color: '#ffffff', display: 'block' }}>No Active Drill Session</strong>
+                <strong style={{ color: 'var(--text-primary)', display: 'block' }}>No Active Drill Session</strong>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>Drill baselines and classroom triangulation scans will open when a safety officer triggers the drill.</p>
               </div>
             )}
@@ -715,7 +727,7 @@ export default function Dashboard({ user, token, onLogout }) {
             <div className="glass-panel" style={{ padding: '2.25rem', animation: 'fadeIn 0.5s ease-out' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h3 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.4rem', fontWeight: 700 }}>Drill Coordination Dashboard</h3>
+                  <h3 style={{ fontFamily: 'Outfit', color: 'var(--text-primary)', fontSize: '1.4rem', fontWeight: 700 }}>Drill Coordination Dashboard</h3>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Trigger live drill events and evaluate classroom baseline presence tracking</p>
                 </div>
                 
@@ -752,30 +764,30 @@ export default function Dashboard({ user, token, onLogout }) {
                   gap: '1.5rem',
                   marginTop: '1.5rem'
                 }}>
-                  <div className="glass-panel" style={{ padding: '1.25rem', textAlign: 'left', borderLeft: '4px solid #3b82f6', background: 'rgba(255,255,255,0.01)', borderRadius: '12px' }}>
+                  <div className="glass-panel" style={{ padding: '1.25rem', textAlign: 'left', borderLeft: '4px solid #3b82f6', background: '#ffffff', borderRadius: '12px' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Total Registered</span>
-                    <strong style={{ fontSize: '1.75rem', color: '#ffffff', display: 'block', marginTop: '0.25rem' }}>{totalParticipants}</strong>
+                    <strong style={{ fontSize: '1.75rem', color: 'var(--text-primary)', display: 'block', marginTop: '0.25rem' }}>{totalParticipants}</strong>
                   </div>
-                  <div className="glass-panel" style={{ padding: '1.25rem', textAlign: 'left', borderLeft: '4px solid #10b981', background: 'rgba(255,255,255,0.01)', borderRadius: '12px' }}>
+                  <div className="glass-panel" style={{ padding: '1.25rem', textAlign: 'left', borderLeft: '4px solid #10b981', background: '#ffffff', borderRadius: '12px' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Safely Arrived</span>
-                    <strong style={{ fontSize: '1.75rem', color: '#10b981', display: 'block', marginTop: '0.25rem' }}>
+                    <strong style={{ fontSize: '1.75rem', color: 'var(--success-text)', display: 'block', marginTop: '0.25rem' }}>
                       {arrivedCount} <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>({totalParticipants > 0 ? Math.round((arrivedCount/totalParticipants)*100) : 0}%)</span>
                     </strong>
                   </div>
-                  <div className="glass-panel" style={{ padding: '1.25rem', textAlign: 'left', borderLeft: '4px solid #fbbf24', background: 'rgba(255,255,255,0.01)', borderRadius: '12px' }}>
+                  <div className="glass-panel" style={{ padding: '1.25rem', textAlign: 'left', borderLeft: '4px solid #d97706', background: '#ffffff', borderRadius: '12px' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600 }}>Classroom Unverified</span>
-                    <strong style={{ fontSize: '1.75rem', color: '#fbbf24', display: 'block', marginTop: '0.25rem' }}>{unverifiedCount}</strong>
+                    <strong style={{ fontSize: '1.75rem', color: 'var(--warning-text)', display: 'block', marginTop: '0.25rem' }}>{unverifiedCount}</strong>
                   </div>
                   <div className="glass-panel" style={{ 
                     padding: '1.25rem', 
                     textAlign: 'left', 
-                    borderLeft: `4px solid ${distressCount > 0 ? '#ef4444' : '#6b7280'}`, 
-                    background: distressCount > 0 ? 'rgba(239, 68, 68, 0.05)' : 'rgba(255,255,255,0.01)', 
+                    borderLeft: `4px solid ${distressCount > 0 ? '#b91c1c' : '#64748b'}`, 
+                    background: distressCount > 0 ? 'var(--error-bg)' : '#ffffff', 
                     borderRadius: '12px',
                     animation: distressCount > 0 ? 'pulseGlow 1.5s infinite ease-in-out' : 'none'
                   }}>
-                    <span style={{ color: distressCount > 0 ? '#ef4444' : 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}><AlertCircle size={14} /> Distress Signals</span>
-                    <strong style={{ fontSize: '1.75rem', color: distressCount > 0 ? '#ef4444' : '#ffffff', display: 'block', marginTop: '0.25rem' }}>{distressCount} Active</strong>
+                    <span style={{ color: distressCount > 0 ? 'var(--error-text)' : 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}><AlertCircle size={14} /> Distress Signals</span>
+                    <strong style={{ fontSize: '1.75rem', color: distressCount > 0 ? 'var(--error-text)' : 'var(--text-primary)', display: 'block', marginTop: '0.25rem' }}>{distressCount} Active</strong>
                   </div>
                 </div>
               )}
@@ -784,14 +796,14 @@ export default function Dashboard({ user, token, onLogout }) {
             {/* Emergency Flashing Distress Alert Panel */}
             {activeDrill && distressCount > 0 && (
               <div style={{
-                background: 'rgba(239, 68, 68, 0.08)',
-                border: '2px solid rgba(239, 68, 68, 0.35)',
+                background: 'var(--error-bg)',
+                border: '2px solid var(--error-border)',
                 borderRadius: '16px',
                 padding: '1.5rem',
                 textAlign: 'left',
                 animation: 'pulseGlow 1.5s infinite'
               }}>
-                <h3 style={{ fontFamily: 'Outfit', color: '#f87171', fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h3 style={{ fontFamily: 'Outfit', color: 'var(--error-text)', fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <AlertCircle size={18} style={{marginRight: '8px', verticalAlign: 'middle'}} /> EMERGENCY DISTRESS ALERTS ACTIVE ({distressCount})
                 </h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
@@ -800,8 +812,8 @@ export default function Dashboard({ user, token, onLogout }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {distressList.map((log) => (
                     <div key={log.userId} style={{
-                      background: 'rgba(15,23,42,0.9)',
-                      border: '1px solid rgba(239,68,68,0.2)',
+                      background: '#ffffff',
+                      border: '1px solid var(--error-border)',
                       borderRadius: '10px',
                       padding: '1.25rem',
                       display: 'flex',
@@ -809,11 +821,11 @@ export default function Dashboard({ user, token, onLogout }) {
                       alignItems: 'center'
                     }}>
                       <div>
-                        <strong style={{ color: '#ffffff', display: 'block', fontSize: '1.05rem' }}>{log.name} ({log.userId})</strong>
+                        <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '1.05rem' }}>{log.name} ({log.userId})</strong>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginTop: '0.15rem' }}>
                           Role: {log.role} | Department: {log.department}
                         </span>
-                        <span style={{ color: '#f87171', fontSize: '0.88rem', display: 'block', marginTop: '0.4rem', fontWeight: 600 }}>
+                        <span style={{ color: 'var(--error-text)', fontSize: '0.88rem', display: 'block', marginTop: '0.4rem', fontWeight: 600 }}>
                           <MapPin size={16} style={{marginRight: '6px', verticalAlign: 'middle'}} /> Last Known Coordinates: {log.location}
                         </span>
                       </div>
@@ -824,7 +836,7 @@ export default function Dashboard({ user, token, onLogout }) {
                           width: 'auto',
                           padding: '0.5rem 1rem',
                           fontSize: '0.8rem',
-                          background: 'linear-gradient(135deg, #10b981, #059669)',
+                          background: 'var(--accent-maroon)',
                           color: '#ffffff',
                           border: 'none',
                           boxShadow: 'none'
@@ -842,7 +854,7 @@ export default function Dashboard({ user, token, onLogout }) {
             <div style={{
               display: 'flex',
               gap: '1rem',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              borderBottom: '1px solid var(--border-subtle)',
               paddingBottom: '1.25rem',
               marginBottom: '0.5rem'
             }}>
@@ -884,7 +896,7 @@ export default function Dashboard({ user, token, onLogout }) {
                 {/* Floor-by-Floor Clearance Checklists (Module 4 clearances) */}
                 {activeDrill && floorClearances.length > 0 && (
                   <div className="glass-panel" style={{ padding: '2rem', textAlign: 'left' }}>
-                    <h3 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.25rem' }}>
+                    <h3 style={{ fontFamily: 'Outfit', color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.25rem' }}>
                       Floor-by-Floor Clearance Checklist
                     </h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
@@ -892,8 +904,8 @@ export default function Dashboard({ user, token, onLogout }) {
                         const isCleared = fc.remaining === 0 && fc.totalOccupants > 0;
                         return (
                           <div key={fc.floor} style={{
-                            background: 'rgba(255,255,255,0.01)',
-                            border: `1px solid ${isCleared ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.05)'}`,
+                            background: '#ffffff',
+                            border: `1px solid ${isCleared ? 'var(--success-border)' : 'var(--border-subtle)'}`,
                             borderRadius: '12px',
                             padding: '1.25rem',
                             display: 'flex',
@@ -901,12 +913,12 @@ export default function Dashboard({ user, token, onLogout }) {
                             gap: '0.5rem'
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <strong style={{ color: '#ffffff', fontSize: '0.95rem' }}>Floor {fc.floor}</strong>
+                              <strong style={{ color: 'var(--text-primary)', fontSize: '0.95rem' }}>Floor {fc.floor}</strong>
                               <span style={{
                                 fontSize: '0.7rem',
                                 fontWeight: 700,
-                                color: isCleared ? '#34d399' : '#f59e0b',
-                                background: isCleared ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                                color: isCleared ? 'var(--success-text)' : 'var(--warning-text)',
+                                background: isCleared ? 'var(--success-bg)' : 'var(--warning-bg)',
                                 padding: '0.15rem 0.4rem',
                                 borderRadius: '4px'
                               }}>
@@ -914,12 +926,12 @@ export default function Dashboard({ user, token, onLogout }) {
                               </span>
                             </div>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                              Arrived: **{fc.evacuated}** of **{fc.totalOccupants}** baseline
+                              Arrived: <strong>{fc.evacuated}</strong> of <strong>{fc.totalOccupants}</strong> baseline
                             </span>
                             <div style={{
                               width: '100%',
                               height: '6px',
-                              background: 'rgba(255,255,255,0.05)',
+                              background: '#f1f5f9',
                               borderRadius: '3px',
                               overflow: 'hidden',
                               marginTop: '0.25rem'
@@ -927,7 +939,7 @@ export default function Dashboard({ user, token, onLogout }) {
                               <div style={{
                                 width: `${fc.totalOccupants > 0 ? (fc.evacuated / fc.totalOccupants) * 100 : 0}%`,
                                 height: '100%',
-                                background: isCleared ? '#10b981' : '#f59e0b',
+                                background: isCleared ? 'var(--success-text)' : 'var(--warning-text)',
                                 transition: 'width 0.4s ease'
                               }}></div>
                             </div>
@@ -941,14 +953,14 @@ export default function Dashboard({ user, token, onLogout }) {
                 {/* Panel 2: Live Room Headcounts & Triangulations Dashboard (Module 2) */}
                 {activeDrill && (
                   <div className="glass-panel" style={{ padding: '2.25rem', animation: 'fadeIn 0.6s ease-out' }}>
-                    <h3 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.35rem', fontWeight: 700, marginBottom: '1.25rem' }}>
+                    <h3 style={{ fontFamily: 'Outfit', color: 'var(--text-primary)', fontSize: '1.35rem', fontWeight: 700, marginBottom: '1.25rem' }}>
                       Campus Room Occupancies Dashboard
                     </h3>
 
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
-                          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                          <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Room Code</th>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Room Name</th>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Floor</th>
@@ -959,11 +971,11 @@ export default function Dashboard({ user, token, onLogout }) {
                         </thead>
                         <tbody>
                           {roomsOccupancy.map((room) => (
-                            <tr key={room.roomId} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                            <tr key={room.roomId} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                               <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem' }}>
-                                <code style={{ color: 'var(--accent-gold)' }}>{room.roomId}</code>
+                                <code style={{ color: 'var(--accent-gold-hover)' }}>{room.roomId}</code>
                               </td>
-                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', fontWeight: 600, color: '#ffffff' }}>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                                 {room.roomName}
                               </td>
                               <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -973,13 +985,13 @@ export default function Dashboard({ user, token, onLogout }) {
                                 <span style={{ 
                                   fontSize: '0.9rem', 
                                   fontWeight: 700, 
-                                  color: room.totalHeadcount > 0 ? '#34d399' : 'var(--text-muted)'
+                                  color: room.totalHeadcount > 0 ? 'var(--success-text)' : 'var(--text-muted)'
                                 }}>
                                   {room.totalHeadcount} Students
                                 </span>
                               </td>
-                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: '#60a5fa' }}>{room.autoRSSI}</td>
-                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: '#fbbf24' }}>{room.manualOverride}</td>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: '#1d4ed8' }}>{room.autoRSSI}</td>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--warning-text)' }}>{room.manualOverride}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -992,7 +1004,7 @@ export default function Dashboard({ user, token, onLogout }) {
                 {activeDrill && missingList.length > 0 && (
                   <div className="glass-panel" style={{ padding: '2.25rem', animation: 'fadeIn 0.6s ease-out' }}>
                     <div style={{ textAlign: 'left', marginBottom: '1.5rem' }}>
-                      <h3 style={{ fontFamily: 'Outfit', color: '#ef4444', fontSize: '1.35rem', fontWeight: 700 }}>
+                      <h3 style={{ fontFamily: 'Outfit', color: 'var(--error-text)', fontSize: '1.35rem', fontWeight: 700 }}>
                         Unaccounted Students Safety Roster ({missingList.length})
                       </h3>
                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
@@ -1003,7 +1015,7 @@ export default function Dashboard({ user, token, onLogout }) {
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
-                          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                          <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>ID Number</th>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Full Name</th>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Department</th>
@@ -1014,14 +1026,14 @@ export default function Dashboard({ user, token, onLogout }) {
                         </thead>
                         <tbody>
                           {missingList.map((stu) => (
-                            <tr key={stu.userId} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                            <tr key={stu.userId} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                               <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem' }}>
-                                <code style={{ color: 'var(--accent-gold)' }}>{stu.userId}</code>
+                                <code style={{ color: 'var(--accent-gold-hover)' }}>{stu.userId}</code>
                               </td>
-                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', color: '#ffffff', fontWeight: 600 }}>{stu.name}</td>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>{stu.name}</td>
                               <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{stu.department}</td>
-                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: '#60a5fa' }}>{stu.originRoom}</td>
-                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: stu.status === 'Pending Marshal Clearance' ? '#fbbf24' : (stu.status === 'Verification Failed' ? '#ef4444' : 'var(--text-secondary)') }}>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: '#1d4ed8' }}>{stu.originRoom}</td>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: stu.status === 'Pending Marshal Clearance' ? 'var(--warning-text)' : (stu.status === 'Verification Failed' ? 'var(--error-text)' : 'var(--text-secondary)') }}>
                                 {stu.status || 'Absent'}
                               </td>
                               <td style={{ padding: '0.75rem 1rem' }}>
@@ -1033,7 +1045,7 @@ export default function Dashboard({ user, token, onLogout }) {
                                       width: 'auto',
                                       padding: '0.35rem 0.75rem',
                                       fontSize: '0.75rem',
-                                      background: 'linear-gradient(135deg, #10b981, #059669)',
+                                      background: 'var(--accent-maroon)',
                                       boxShadow: 'none'
                                     }}
                                   >
@@ -1052,7 +1064,7 @@ export default function Dashboard({ user, token, onLogout }) {
                 {/* Panel 3: Location-Unverified Student Triage Roster (Module 2 unverified scans) */}
                 {activeDrill && unverifiedList.length > 0 && (
                   <div className="glass-panel" style={{ padding: '2.25rem', animation: 'fadeIn 0.6s ease-out' }}>
-                    <h3 style={{ fontFamily: 'Outfit', color: '#fbbf24', fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                    <h3 style={{ fontFamily: 'Outfit', color: 'var(--warning-text)', fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.25rem' }}>
                       Location-Unverified Student Triage Roster
                     </h3>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
@@ -1089,9 +1101,9 @@ export default function Dashboard({ user, token, onLogout }) {
                 {/* Panel 4: Administrative Pending Staff Accounts (Module 1 approvals) */}
                 {user.role === 'System Admin' && (
                   <div className="glass-panel" style={{ padding: '2.25rem', animation: 'fadeIn 0.5s ease-out' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem', flexWrap: 'wrap' }}>
                       <div>
-                        <h3 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.35rem', fontWeight: 700 }}>
+                        <h3 style={{ fontFamily: 'Outfit', color: 'var(--text-primary)', fontSize: '1.35rem', fontWeight: 700 }}>
                           Pending Staff Registration Requests
                         </h3>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
@@ -1112,19 +1124,19 @@ export default function Dashboard({ user, token, onLogout }) {
                       <div style={{
                         padding: '4rem 2rem',
                         textAlign: 'center',
-                        background: 'rgba(255,255,255,0.02)',
+                        background: '#ffffff',
                         borderRadius: '12px',
-                        border: '1px dashed var(--border-glass)'
+                        border: '1px dashed var(--border-subtle)'
                       }}>
-                        <CheckCircle size={48} color="#34d399" style={{ marginBottom: '1rem', opacity: 0.8 }} />
-                        <h4 style={{ color: '#ffffff', fontSize: '1.25rem', fontWeight: 600, margin: 0 }}>All Caught Up!</h4>
+                        <CheckCircle size={48} color="var(--success-text)" style={{ marginBottom: '1rem', opacity: 0.8 }} />
+                        <h4 style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 600, margin: 0 }}>All Caught Up!</h4>
                         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>There are no pending staff registration requests to review at this time.</p>
                       </div>
                     ) : (
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                           <thead>
-                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                            <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                               <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Employee ID</th>
                               <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Full Name</th>
                               <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Institutional Email</th>
@@ -1134,16 +1146,16 @@ export default function Dashboard({ user, token, onLogout }) {
                           </thead>
                           <tbody>
                             {pendingRequests.map((req) => (
-                              <tr key={req.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                              <tr key={req.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                                 <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem' }}>
-                                  <code style={{ color: 'var(--accent-gold)' }}>{req.id}</code>
+                                  <code style={{ color: 'var(--accent-gold-hover)' }}>{req.id}</code>
                                 </td>
-                                <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', fontWeight: 600, color: '#ffffff' }}>{req.name}</td>
+                                <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>{req.name}</td>
                                 <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{req.email}</td>
                                 <td style={{ padding: '0.75rem 1rem' }}>{renderBadge(req.role)}</td>
                                 <td style={{ padding: '0.75rem 1rem', display: 'flex', gap: '0.5rem' }}>
-                                  <button onClick={() => handleApproveRequest(req.id)} className="btn btn-primary" style={{ width: 'auto', padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#ffffff', boxShadow: 'none' }}>Approve</button>
-                                  <button onClick={() => setRejectingId(req.id)} className="btn btn-secondary" style={{ width: 'auto', padding: '0.35rem 0.75rem', fontSize: '0.75rem', border: '1px solid #ef4444', color: '#ef4444' }}>Reject</button>
+                                  <button onClick={() => handleApproveRequest(req.id)} className="btn btn-primary" style={{ width: 'auto', padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: 'var(--accent-maroon)', color: '#ffffff', boxShadow: 'none' }}>Approve</button>
+                                  <button onClick={() => setRejectingId(req.id)} className="btn btn-secondary" style={{ width: 'auto', padding: '0.35rem 0.75rem', fontSize: '0.75rem', border: '1px solid var(--error-border)', color: 'var(--error-text)' }}>Reject</button>
                                 </td>
                               </tr>
                             ))}
@@ -1157,15 +1169,15 @@ export default function Dashboard({ user, token, onLogout }) {
                 {/* Panel 5: Admin User Directory List (Module 1 management) */}
                 {user.role === 'System Admin' && (
                   <div className="glass-panel" style={{ padding: '2.25rem', animation: 'fadeIn 0.6s ease-out' }}>
-                    <div style={{ display: 'flex', justify: 'space-between', align: 'center', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem', flexWrap: 'wrap' }}>
                       <div>
-                        <h3 style={{ fontFamily: 'Outfit', color: '#ffffff', fontSize: '1.35rem', fontWeight: 700 }}>System User Directory</h3>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Active registered user accounts database</p>
+                        <h3 style={{ fontFamily: 'Outfit', color: 'var(--text-primary)', fontSize: '1.35rem', fontWeight: 700 }}>System User Directory</h3>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>Active registered user accounts database</p>
                       </div>
                       <button 
                         onClick={fetchUsers} 
                         className="btn btn-secondary" 
-                        style={{ width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}
+                        style={{ width: 'auto', padding: '0.5rem 1rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
                         disabled={loadingUsers}
                       >
                         Sync Directory
@@ -1175,7 +1187,7 @@ export default function Dashboard({ user, token, onLogout }) {
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
-                          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                          <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>UID</th>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Identity Name</th>
                             <th style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Email</th>
@@ -1186,17 +1198,18 @@ export default function Dashboard({ user, token, onLogout }) {
                         </thead>
                         <tbody>
                           {usersList.map((usr) => (
-                            <tr key={usr.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.2s' }}>
-                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem' }}><code style={{ color: 'var(--accent-gold)' }}>{usr.id}</code></td>
-                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', fontWeight: 600, color: '#ffffff' }}>{usr.name}</td>
+                            <tr key={usr.id} style={{ borderBottom: '1px solid var(--border-subtle)', transition: 'background 0.2s' }}>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem' }}><code style={{ color: 'var(--accent-gold-hover)' }}>{usr.id}</code></td>
+                              <td style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>{usr.name}</td>
                               <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{usr.email}</td>
                               <td style={{ padding: '0.75rem 1rem' }}>{renderBadge(usr.role)}</td>
                               <td style={{ padding: '0.75rem 1rem' }}>
                                 <span style={{ 
                                   fontSize: '0.75rem', 
                                   fontWeight: 700, 
-                                  color: usr.status === 'locked' ? '#ef4444' : usr.status === 'Rejected' ? '#ef4444' : '#10b981',
-                                  background: usr.status === 'locked' ? 'rgba(239, 68, 68, 0.1)' : usr.status === 'Rejected' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                                  color: usr.status === 'locked' || usr.status === 'Rejected' ? 'var(--error-text)' : 'var(--success-text)',
+                                  background: usr.status === 'locked' || usr.status === 'Rejected' ? 'var(--error-bg)' : 'var(--success-bg)',
+                                  border: `1px solid ${usr.status === 'locked' || usr.status === 'Rejected' ? 'var(--error-border)' : 'var(--success-border)'}`,
                                   padding: '0.2rem 0.5rem',
                                   borderRadius: '6px'
                                 }}>{usr.status === 'locked' ? 'LOCKED' : usr.status === 'Rejected' ? 'REJECTED' : 'ACTIVE'}</span>
@@ -1206,7 +1219,7 @@ export default function Dashboard({ user, token, onLogout }) {
                                   className="form-input"
                                   value={usr.role}
                                   onChange={(e) => handleRoleChange(usr.id, e.target.value)}
-                                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', background: 'rgba(15,23,42,0.85)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px', cursor: 'pointer', color: '#ffffff' }}
+                                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', background: '#ffffff', borderColor: '#cbd5e1', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-primary)' }}
                                 >
                                   <option value="Student">Student</option>
                                   <option value="Teacher">Teacher/Staff</option>
@@ -1234,7 +1247,7 @@ export default function Dashboard({ user, token, onLogout }) {
                       <Building size={20} style={{marginRight: '8px', verticalAlign: 'middle'}} /> NGE Building — Evacuation Route Map
                     </h4>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '1rem', textAlign: 'left' }}>
-                      Dr. Nicolas G. Escario Sr. Building • CIT-U Campus (B1)
+                      Dr. Nicolas G. Escario Sr. Building • Main Campus (B1)
                     </p>
 
                     {/* Floor Selector Tabs */}
